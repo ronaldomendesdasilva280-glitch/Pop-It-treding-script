@@ -1,4 +1,4 @@
--- MASK HUB v6 (Atualizado)
+-- MASK HUB v6 (Atualizado com Invisible Potion & UI Blocker)
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local WS = game:GetService("Workspace")
@@ -641,86 +641,56 @@ end)
 MakeLine(ScrollTroll)
 
 -- ==========================================
--- NOVA FUNÇÃO: WARDROBE SEQUENCE (TROLL)
+-- NOVA FUNÇÃO: INVISIBLE POTION SEQUENCE
 -- ==========================================
-MakeSec(ScrollTroll, "Wardrobe Sequence")
-MakeBtn(ScrollTroll, "EXECUTE WARDROBE SEQUENCE", Color3.fromRGB(180, 50, 200), function()
+MakeSec(ScrollTroll, "Invisible Potion Sequence")
+MakeBtn(ScrollTroll, "EXECUTE INVISIBLE POTION", Color3.fromRGB(0, 200, 255), function()
 	task.spawn(function()
-		-- Inicia Loading Roxo (Diferente do Gold)
-		StartLoading("Wardrobe Sequence", "Equipping Wardrobe...", Color3.fromRGB(180, 50, 200))
+		-- 1. Inicia Loading (Cor Ciano para diferenciar)
+		StartLoading("Invisible Potion", "Equipping Potion...", Color3.fromRGB(0, 200, 255))
 		
-		-- Passo 1: Equipar
-		pcall(function() Events:WaitForChild("Equip"):FireServer("Wardrobe") end)
+		-- 2. Usa o remote de Equip
+		pcall(function() 
+			Events:WaitForChild("Equip"):FireServer("Potion Invisible") 
+		end)
 		task.wait(1)
-		UpdateLoading(0.25, "Dropping Wardrobe...")
+		UpdateLoading(0.3, "Activating Item...")
 		
-		-- Passo 2: Dropar
-		pcall(function() Events:WaitForChild("Drop"):FireServer("Wardrobe") end)
-		task.wait(1)
-		UpdateLoading(0.50, "Detecting dropped item...")
-		
-		-- Passo 3: Detectar e clicar no ProximityPrompt
-		local droppedFolder = WS:WaitForChild("Dropped", 3)
-		local wardrobeItem = droppedFolder and droppedFolder:WaitForChild("Wardrobe", 3)
-		
-		if wardrobeItem then
-			local prompt = wardrobeItem:FindFirstChildWhichIsA("ProximityPrompt")
-			if prompt then
-				UpdateLoading(0.65, "Interacting with item...")
-				-- Tenta usar a função do executor, com fallback para simulação
-				local success = pcall(function() fireproximityprompt(prompt) end)
-				if not success then
-					pcall(function() 
-						prompt:InputHoldBegin() 
-						task.wait(0.5) 
-						prompt:InputHoldEnd() 
-					end)
-				end
-			end
-		else
-			UpdateLoading(0.65, "Item not found, continuing...")
+		-- 3. Configura o bloqueio ABSOLUTO da UI "ResetPotion"
+		-- Destrói imediatamente caso já exista
+		if PlayerGui:FindFirstChild("ResetPotion") then
+			PlayerGui.ResetPotion:Destroy()
 		end
-		
-		task.wait(1)
-		UpdateLoading(0.75, "Teleporting to Augusto Close...")
-		
-		-- Passo 4: Teleportar
-		local targetPart = nil
-		pcall(function()
-			local boards = WS:WaitForChild("Boards", 3)
-			local children = boards:GetChildren()
-			if #children >= 11 then
-				targetPart = children[11]:WaitForChild("Controls", 2):WaitForChild("Close", 2)
+		-- Monitora e destrói assim que o jogo tentar criá-la
+		local blockConn = PlayerGui.ChildAdded:Connect(function(child)
+			if child.Name == "ResetPotion" then
+				child:Destroy()
 			end
 		end)
 		
-		if targetPart and targetPart:IsA("BasePart") then
-			pcall(function() 
-				-- Adiciona um pequeno offset para não ficar preso dentro da parte
-				RootPart.CFrame = targetPart.CFrame + Vector3.new(0, 5, 0) 
-			end)
-		else
-			UpdateLoading(0.75, "Teleport target missing, using fallback...")
-			pcall(function() RootPart.CFrame = CFrame.new(RootPart.Position + Vector3.new(0, 50, 0)) end)
+		-- 4. Tenta clicar/ativar a ferramenta automaticamente
+		local tool = Character:FindFirstChild("Potion Invisible") or LocalPlayer.Backpack:FindFirstChild("Potion Invisible")
+		if tool then
+			-- Simula o clique/ativação da ferramenta
+			pcall(function() tool:Activate() end)
+			-- Tenta disparar o RemoteEvent interno da ferramenta, se existir
+			local remote = tool:FindFirstChildWhichIsA("RemoteEvent")
+			if remote then 
+				pcall(function() remote:FireServer() end) 
+			end
 		end
 		
 		task.wait(1)
-		UpdateLoading(0.90, "Jumping sequence...")
+		UpdateLoading(0.6, "Blocking UI Prompts...")
 		
-		-- Passo 5: Pular 3 vezes
-		local jumpRemote = Events:WaitForChild("Jumped")
-		for i = 1, 3 do
-			-- Tenta pular normalmente pelo Roblox
-			pcall(function() Humanoid.Jump = true end)
-			task.wait(0.2)
-			-- Dispara o remote do jogo
-			pcall(function() jumpRemote:FireServer() end)
-			task.wait(0.8) -- Completa 1 segundo por ciclo de pulo
-		end
+		-- 5. Espera o tempo necessário (o script original espera 3 segundos para mostrar o botão de reset)
+		task.wait(3.5)
+		UpdateLoading(0.9, "Finalizing...")
 		
-		-- Finaliza com sucesso
-		FinishLoading(true, "Sequence Completed Successfully!")
-		SetStatus("Wardrobe Sequence Done!", Color3.fromRGB(180, 50, 200))
+		-- 6. Finaliza e limpa a conexão de bloqueio
+		blockConn:Disconnect()
+		FinishLoading(true, "Potion Activated & UI Blocked!")
+		SetStatus("Invisible Potion Done!", Color3.fromRGB(0, 200, 255))
 		task.wait(2)
 		SetStatus("Ready")
 	end)
@@ -832,5 +802,5 @@ FieldBtn = MakeBtn(ScrollExtra, "REMOVE FIELDS", Color3.fromRGB(200, 200, 200), 
 	SetStatus("Fields removed.", Color3.fromRGB(160, 40, 40))
 end)
 
-print("[MASK HUB v6] Loaded successfully with new Wardrobe Sequence!")
+print("[MASK HUB v6] Loaded successfully with Invisible Potion & UI Blocker!")
 SetStatus("Ready", Color3.fromRGB(70,70,70))
