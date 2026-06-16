@@ -1,0 +1,836 @@
+-- MASK HUB v6 (Atualizado)
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local WS = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	Character = char
+	RootPart = char:WaitForChild("HumanoidRootPart")
+	Humanoid = char:WaitForChild("Humanoid")
+end)
+
+local Events = RS:WaitForChild("RemoteEvents")
+local ItemsFolder = RS:WaitForChild("Items")
+
+local function ResolveItemName(inputName)
+	if ItemsFolder:FindFirstChild(inputName) then return inputName end
+	for _, item in pairs(ItemsFolder:GetChildren()) do
+		local dn = item:FindFirstChild("DisplayName")
+		if dn and string.lower(dn.Value) == string.lower(inputName) then return item.Name end
+		if string.lower(item.Name) == string.lower(inputName) then return item.Name end
+	end
+	return inputName
+end
+
+-- ================================
+-- LIMPA GUI ANTERIOR
+-- ================================
+if PlayerGui:FindFirstChild("MaskHub") then
+	PlayerGui:FindFirstChild("MaskHub"):Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MaskHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
+
+-- ================================
+-- FULL SCREEN LOADING (100% TELA)
+-- ================================
+local LoadOverlay = Instance.new("Frame")
+LoadOverlay.Size = UDim2.new(1, 0, 1, 0) -- 100% da tela
+LoadOverlay.Position = UDim2.new(0, 0, 0, 0)
+LoadOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+LoadOverlay.BackgroundTransparency = 0
+LoadOverlay.BorderSizePixel = 0
+LoadOverlay.Visible = false
+LoadOverlay.ZIndex = 999 -- Garante que fique acima de tudo
+LoadOverlay.Parent = ScreenGui
+
+-- Card central da loading screen
+local LoadCard = Instance.new("Frame")
+LoadCard.Size = UDim2.new(0, 320, 0, 150)
+LoadCard.Position = UDim2.new(0.5, -160, 0.5, -75)
+LoadCard.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+LoadCard.BorderSizePixel = 0
+LoadCard.ZIndex = 1000
+LoadCard.Parent = LoadOverlay
+Instance.new("UICorner", LoadCard).CornerRadius = UDim.new(0, 12)
+
+local LCS = Instance.new("UIStroke", LoadCard)
+LCS.Color = Color3.fromRGB(50, 50, 50)
+LCS.Thickness = 1.5
+
+local LoadTitle = Instance.new("TextLabel")
+LoadTitle.Size = UDim2.new(1, 0, 0, 38)
+LoadTitle.Position = UDim2.new(0, 0, 0, 10)
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.Text = "Loading..."
+LoadTitle.TextColor3 = Color3.fromRGB(255, 200, 0)
+LoadTitle.TextSize = 18
+LoadTitle.Font = Enum.Font.GothamBold
+LoadTitle.TextXAlignment = Enum.TextXAlignment.Center
+LoadTitle.ZIndex = 1001
+LoadTitle.Parent = LoadCard
+
+local LoadSub = Instance.new("TextLabel")
+LoadSub.Size = UDim2.new(1, 0, 0, 18)
+LoadSub.Position = UDim2.new(0, 0, 0, 48)
+LoadSub.BackgroundTransparency = 1
+LoadSub.Text = "Preparing..."
+LoadSub.TextColor3 = Color3.fromRGB(130, 130, 130)
+LoadSub.TextSize = 11
+LoadSub.Font = Enum.Font.Gotham
+LoadSub.TextXAlignment = Enum.TextXAlignment.Center
+LoadSub.ZIndex = 1001
+LoadSub.Parent = LoadCard
+
+-- Barra de loading
+local BarTrack = Instance.new("Frame")
+BarTrack.Size = UDim2.new(0, 260, 0, 8)
+BarTrack.Position = UDim2.new(0.5, -130, 0, 76)
+BarTrack.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+BarTrack.BorderSizePixel = 0
+BarTrack.ZIndex = 1001
+BarTrack.Parent = LoadCard
+Instance.new("UICorner", BarTrack).CornerRadius = UDim.new(1, 0)
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 1002
+BarFill.Parent = BarTrack
+Instance.new("UICorner", BarFill).CornerRadius = UDim.new(1, 0)
+
+local BarPct = Instance.new("TextLabel")
+BarPct.Size = UDim2.new(1, 0, 0, 16)
+BarPct.Position = UDim2.new(0, 0, 1, 4)
+BarPct.BackgroundTransparency = 1
+BarPct.Text = "0%"
+BarPct.TextColor3 = Color3.fromRGB(160, 160, 160)
+BarPct.TextSize = 9
+BarPct.Font = Enum.Font.GothamBold
+BarPct.TextXAlignment = Enum.TextXAlignment.Center
+BarPct.ZIndex = 1001
+BarPct.Parent = BarTrack
+
+local LoadResult = Instance.new("TextLabel")
+LoadResult.Size = UDim2.new(1, 0, 0, 18)
+LoadResult.Position = UDim2.new(0, 0, 0, 118)
+LoadResult.BackgroundTransparency = 1
+LoadResult.Text = ""
+LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
+LoadResult.TextSize = 10
+LoadResult.Font = Enum.Font.GothamBold
+LoadResult.TextXAlignment = Enum.TextXAlignment.Center
+LoadResult.ZIndex = 1001
+LoadResult.Parent = LoadCard
+
+-- Funções de controle do Loading
+local function SetBarPct(pct)
+	TweenService:Create(BarFill, TweenInfo.new(0.15), {
+		Size = UDim2.new(pct, 0, 1, 0)
+	}):Play()
+	BarPct.Text = math.floor(pct * 100) .. "%"
+end
+
+local function StartLoading(title, sub, color)
+	LoadOverlay.Visible = true
+	LoadTitle.Text = title
+	LoadTitle.TextColor3 = color
+	BarFill.BackgroundColor3 = color
+	LoadSub.Text = sub
+	BarFill.Size = UDim2.new(0, 0, 1, 0)
+	BarPct.Text = "0%"
+	LoadResult.Text = ""
+	SetBarPct(0)
+end
+
+local function UpdateLoading(pct, sub)
+	SetBarPct(pct)
+	if sub then LoadSub.Text = sub end
+end
+
+local function FinishLoading(success, msg)
+	SetBarPct(1)
+	LoadResult.Text = msg
+	LoadResult.TextColor3 = success and Color3.fromRGB(60, 200, 60) or Color3.fromRGB(220, 60, 60)
+	task.wait(1.5)
+	LoadOverlay.Visible = false
+end
+
+-- ================================
+-- BOTAO FLUTUANTE
+-- ================================
+local FloatBtn = Instance.new("TextButton")
+FloatBtn.Size = UDim2.new(0, 56, 0, 56)
+FloatBtn.Position = UDim2.new(0, 14, 0, 14)
+FloatBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+FloatBtn.Text = "MASK\nHUB"
+FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatBtn.TextSize = 9
+FloatBtn.Font = Enum.Font.GothamBold
+FloatBtn.BorderSizePixel = 0
+FloatBtn.Active = true
+FloatBtn.Draggable = true
+FloatBtn.ZIndex = 10
+FloatBtn.Parent = ScreenGui
+Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
+
+local FS = Instance.new("UIStroke", FloatBtn)
+FS.Color = Color3.fromRGB(42, 42, 42)
+FS.Thickness = 1.5
+
+-- ================================
+-- MAIN FRAME QUADRADO
+-- ================================
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 270, 0, 270)
+MainFrame.Position = UDim2.new(0.5, -135, 0.5, -135)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+local MS = Instance.new("UIStroke", MainFrame)
+MS.Color = Color3.fromRGB(32, 32, 32)
+MS.Thickness = 1.5
+
+-- Title bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 32)
+TitleBar.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
+
+local TitleLine = Instance.new("Frame")
+TitleLine.Size = UDim2.new(1, 0, 0, 1)
+TitleLine.Position = UDim2.new(0, 0, 1, 0)
+TitleLine.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+TitleLine.BorderSizePixel = 0
+TitleLine.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -34, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "MASK HUB"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 13
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.Position = UDim2.new(1, -26, 0.5, -10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+CloseBtn.TextSize = 9
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+
+local guiVisible = true
+FloatBtn.MouseButton1Click:Connect(function()
+	guiVisible = not guiVisible
+	MainFrame.Visible = guiVisible
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+	guiVisible = false
+	MainFrame.Visible = false
+end)
+
+-- ================================
+-- TABS BAR (3 abas)
+-- ================================
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, 0, 0, 26)
+TabBar.Position = UDim2.new(0, 0, 0, 33)
+TabBar.BackgroundColor3 = Color3.fromRGB(9, 9, 9)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+local TabLineBot = Instance.new("Frame")
+TabLineBot.Size = UDim2.new(1, 0, 0, 1)
+TabLineBot.Position = UDim2.new(0, 0, 1, 0)
+TabLineBot.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+TabLineBot.BorderSizePixel = 0
+TabLineBot.Parent = TabBar
+
+local TabIndicator = Instance.new("Frame")
+TabIndicator.Size = UDim2.new(0.333, 0, 0, 2)
+TabIndicator.Position = UDim2.new(0, 0, 1, -2)
+TabIndicator.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+TabIndicator.BorderSizePixel = 0
+TabIndicator.Parent = TabBar
+
+local tabDefs = {"FARM", "TROLL", "EXTRA"}
+local tabBtns = {}
+for i, name in ipairs(tabDefs) do
+	local Btn = Instance.new("TextButton")
+	Btn.Size = UDim2.new(0.333, 0, 1, 0)
+	Btn.Position = UDim2.new(0.333 * (i-1), 0, 0, 0)
+	Btn.BackgroundTransparency = 1
+	Btn.Text = name
+	Btn.TextColor3 = i == 1 and Color3.fromRGB(255,255,255) or Color3.fromRGB(90,90,90)
+	Btn.TextSize = 9
+	Btn.Font = Enum.Font.GothamBold
+	Btn.Parent = TabBar
+	table.insert(tabBtns, Btn)
+	if i < 3 then
+		local Div = Instance.new("Frame")
+		Div.Size = UDim2.new(0, 1, 1, 0)
+		Div.Position = UDim2.new(0.333 * i, 0, 0, 0)
+		Div.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+		Div.BorderSizePixel = 0
+		Div.Parent = TabBar
+	end
+end
+
+-- Content area
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, 0, 1, -62)
+ContentArea.Position = UDim2.new(0, 0, 0, 60)
+ContentArea.BackgroundTransparency = 1
+ContentArea.ClipsDescendants = true
+ContentArea.Parent = MainFrame
+
+local function MakeScroll(parent)
+	local Scroll = Instance.new("ScrollingFrame")
+	Scroll.Size = UDim2.new(1, 0, 1, -16)
+	Scroll.BackgroundTransparency = 1
+	Scroll.BorderSizePixel = 0
+	Scroll.ScrollBarThickness = 2
+	Scroll.ScrollBarImageColor3 = Color3.fromRGB(36, 36, 36)
+	Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Scroll.Parent = parent
+	local L = Instance.new("UIListLayout", Scroll)
+	L.SortOrder = Enum.SortOrder.LayoutOrder
+	L.Padding = UDim.new(0, 4)
+	local P = Instance.new("UIPadding", Scroll)
+	P.PaddingLeft = UDim.new(0, 6)
+	P.PaddingRight = UDim.new(0, 6)
+	P.PaddingTop = UDim.new(0, 5)
+	return Scroll
+end
+
+local pages, scrolls = {}, {}
+for i = 1, 3 do
+	local Page = Instance.new("Frame")
+	Page.Size = UDim2.new(1, 0, 1, 0)
+	Page.BackgroundTransparency = 1
+	Page.Visible = i == 1
+	Page.Parent = ContentArea
+	table.insert(pages, Page)
+	table.insert(scrolls, MakeScroll(Page))
+end
+
+local ScrollFarm  = scrolls[1]
+local ScrollTroll = scrolls[2]
+local ScrollExtra = scrolls[3]
+
+-- Status bar
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -10, 0, 14)
+StatusLabel.Position = UDim2.new(0, 5, 1, -16)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Ready"
+StatusLabel.TextColor3 = Color3.fromRGB(70, 70, 70)
+StatusLabel.TextSize = 8
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+StatusLabel.Parent = MainFrame
+
+local function SetStatus(msg, color)
+	StatusLabel.Text = msg
+	StatusLabel.TextColor3 = color or Color3.fromRGB(70, 70, 70)
+end
+
+local function SwitchTab(idx)
+	for i, page in ipairs(pages) do
+		page.Visible = i == idx
+		tabBtns[i].TextColor3 = i == idx and Color3.fromRGB(255,255,255) or Color3.fromRGB(90,90,90)
+	end
+	TweenService:Create(TabIndicator, TweenInfo.new(0.14), {
+		Position = UDim2.new(0.333 * (idx-1), 0, 1, -2)
+	}):Play()
+end
+
+for i, btn in ipairs(tabBtns) do
+	btn.MouseButton1Click:Connect(function() SwitchTab(i) end)
+end
+
+-- ================================
+-- UI HELPERS
+-- ================================
+local function MakeSec(scroll, title)
+	local L = Instance.new("TextLabel")
+	L.Size = UDim2.new(1, 0, 0, 14)
+	L.BackgroundTransparency = 1
+	L.Text = "  " .. string.upper(title)
+	L.TextColor3 = Color3.fromRGB(100, 100, 100)
+	L.TextSize = 8
+	L.Font = Enum.Font.GothamBold
+	L.TextXAlignment = Enum.TextXAlignment.Left
+	L.Parent = scroll
+end
+
+local function MakeLine(scroll)
+	local L = Instance.new("Frame")
+	L.Size = UDim2.new(1, 0, 0, 1)
+	L.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+	L.BorderSizePixel = 0
+	L.Parent = scroll
+end
+
+local function MakeTB(scroll, ph, cb)
+	local C = Instance.new("Frame")
+	C.Size = UDim2.new(1, 0, 0, 26)
+	C.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+	C.BorderSizePixel = 0
+	C.Parent = scroll
+	Instance.new("UICorner", C).CornerRadius = UDim.new(0, 5)
+	local S = Instance.new("UIStroke", C)
+	S.Color = Color3.fromRGB(24, 24, 24)
+	S.Thickness = 1
+	local TB = Instance.new("TextBox")
+	TB.Size = UDim2.new(1, -10, 1, -6)
+	TB.Position = UDim2.new(0, 5, 0, 3)
+	TB.BackgroundTransparency = 1
+	TB.Text = ""
+	TB.PlaceholderText = ph
+	TB.PlaceholderColor3 = Color3.fromRGB(50, 50, 50)
+	TB.TextColor3 = Color3.fromRGB(255, 255, 255)
+	TB.TextSize = 10
+	TB.Font = Enum.Font.Gotham
+	TB.TextXAlignment = Enum.TextXAlignment.Left
+	TB.ClearTextOnFocus = false
+	TB.Parent = C
+	TB.FocusLost:Connect(function()
+		if TB.Text ~= "" then cb(TB.Text) end
+	end)
+	return C, TB
+end
+
+local function MakeBtn(scroll, label, color, cb)
+	local Btn = Instance.new("TextButton")
+	Btn.Size = UDim2.new(1, 0, 0, 26)
+	Btn.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	Btn.BorderSizePixel = 0
+	Btn.Text = label
+	Btn.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+	Btn.TextSize = 10
+	Btn.Font = Enum.Font.GothamBold
+	Btn.Parent = scroll
+	Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
+	local S = Instance.new("UIStroke", Btn)
+	S.Color = Color3.fromRGB(28, 28, 28)
+	S.Thickness = 1
+	Btn.MouseEnter:Connect(function()
+		TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(24,24,24)}):Play()
+	end)
+	Btn.MouseLeave:Connect(function()
+		TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(16,16,16)}):Play()
+	end)
+	Btn.MouseButton1Click:Connect(cb)
+	return Btn
+end
+
+local function MakeToggle(scroll, label, color, cb)
+	local C = Instance.new("Frame")
+	C.Size = UDim2.new(1, 0, 0, 26)
+	C.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+	C.BorderSizePixel = 0
+	C.Parent = scroll
+	Instance.new("UICorner", C).CornerRadius = UDim.new(0, 5)
+	local S = Instance.new("UIStroke", C)
+	S.Color = Color3.fromRGB(28, 28, 28)
+	S.Thickness = 1
+	local Lbl = Instance.new("TextLabel")
+	Lbl.Size = UDim2.new(1, -46, 1, 0)
+	Lbl.Position = UDim2.new(0, 8, 0, 0)
+	Lbl.BackgroundTransparency = 1
+	Lbl.Text = label
+	Lbl.TextColor3 = color or Color3.fromRGB(255,255,255)
+	Lbl.TextSize = 10
+	Lbl.Font = Enum.Font.GothamBold
+	Lbl.TextXAlignment = Enum.TextXAlignment.Left
+	Lbl.Parent = C
+	local Track = Instance.new("Frame")
+	Track.Size = UDim2.new(0, 28, 0, 13)
+	Track.Position = UDim2.new(1, -34, 0.5, -6)
+	Track.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+	Track.BorderSizePixel = 0
+	Track.Parent = C
+	Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+	local Knob = Instance.new("Frame")
+	Knob.Size = UDim2.new(0, 9, 0, 9)
+	Knob.Position = UDim2.new(0, 2, 0.5, -4)
+	Knob.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+	Knob.BorderSizePixel = 0
+	Knob.Parent = Track
+	Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+	local Hit = Instance.new("TextButton")
+	Hit.Size = UDim2.new(1, 0, 1, 0)
+	Hit.BackgroundTransparency = 1
+	Hit.Text = ""
+	Hit.Parent = C
+	local tog = false
+	Hit.MouseButton1Click:Connect(function()
+		tog = not tog
+		TweenService:Create(Track, TweenInfo.new(0.14), {
+			BackgroundColor3 = tog and Color3.fromRGB(0,120,0) or Color3.fromRGB(28,28,28)
+		}):Play()
+		TweenService:Create(Knob, TweenInfo.new(0.14), {
+			Position = tog and UDim2.new(0,17,0.5,-4) or UDim2.new(0,2,0.5,-4),
+			BackgroundColor3 = tog and Color3.fromRGB(255,255,255) or Color3.fromRGB(80,80,80)
+		}):Play()
+		cb(tog)
+	end)
+	return C
+end
+
+-- ================================
+-- FARM PAGE
+-- ================================
+MakeSec(ScrollFarm, "Drop Item Fest")
+local dropItemName = "The Banana"
+MakeTB(ScrollFarm, "Item name...", function(v)
+	dropItemName = v
+	SetStatus("Drop: "..v, Color3.fromRGB(200,60,60))
+end)
+MakeBtn(ScrollFarm, "DROP ITEM FEST  (15x)", Color3.fromRGB(220,60,60), function()
+	task.spawn(function()
+		local name = ResolveItemName(dropItemName)
+		local eR = Events:WaitForChild("Equip")
+		local dR = Events:WaitForChild("Drop")
+		SetStatus("Running Drop Fest...", Color3.fromRGB(220,60,60))
+		for i = 1, 15 do
+			eR:FireServer(name)
+			task.wait(0.08)
+			dR:FireServer(name)
+			task.wait(0.08)
+		end
+		SetStatus("Drop Fest done!", Color3.fromRGB(60,200,60))
+		task.wait(2) SetStatus("Ready")
+	end)
+end)
+MakeLine(ScrollFarm)
+MakeSec(ScrollFarm, "Buy Items")
+local buyItemName = "The Banana"
+local buyLoopActive = false
+MakeTB(ScrollFarm, "Item name...", function(v)
+	buyItemName = v
+	SetStatus("Buy: "..v, Color3.fromRGB(60,200,60))
+end)
+MakeToggle(ScrollFarm, "BUY ITEMS LOOP", Color3.fromRGB(70,210,70), function(state)
+	buyLoopActive = state
+	if state then
+		SetStatus("Buying in loop...", Color3.fromRGB(60,200,60))
+		task.spawn(function()
+			local bR = Events:WaitForChild("BuyItemCash")
+			while buyLoopActive do
+				bR:FireServer(ResolveItemName(buyItemName))
+				task.wait(0.50)
+			end
+			SetStatus("Buy loop stopped.", Color3.fromRGB(70,70,70))
+		end)
+	end
+end)
+
+-- ================================
+-- TROLL PAGE
+-- ================================
+local function FindNearestDollHouse()
+	local nearest, nearestDist = nil, math.huge
+	local function Search(parent, depth)
+		if depth > 5 then return end
+		for _, obj in pairs(parent:GetChildren()) do
+			if obj.Name == "Doll House" then
+				local part = obj:FindFirstChildWhichIsA("BasePart") or obj.PrimaryPart
+				if part then
+					local d = (RootPart.Position - part.Position).Magnitude
+					if d < nearestDist then nearestDist = d nearest = obj end
+				end
+			end
+			Search(obj, depth + 1)
+		end
+	end
+	Search(WS, 0)
+	return nearest
+end
+
+local function ClickDoll(doll)
+	local cd = doll:FindFirstChildWhichIsA("ClickDetector", true)
+	if cd then fireclickdetector(cd) return true end
+	return false
+end
+
+-- Doll House Farm
+MakeSec(ScrollTroll, "Doll House Farm")
+local dollItemName = "The Banana"
+local dollLoopActive = false
+MakeTB(ScrollTroll, "Item name...", function(v)
+	dollItemName = v
+	SetStatus("Item: "..v, Color3.fromRGB(150,60,210))
+end)
+MakeToggle(ScrollTroll, "DOLL HOUSE FARM", Color3.fromRGB(160,70,210), function(state)
+	dollLoopActive = state
+	if state then
+		SetStatus("Doll Farm active...", Color3.fromRGB(150,60,210))
+		task.spawn(function()
+			local eR = Events:WaitForChild("Equip")
+			while dollLoopActive do
+				local doll = FindNearestDollHouse()
+				if doll then
+					ClickDoll(doll)
+					task.wait(0.05)
+					eR:FireServer(ResolveItemName(dollItemName))
+					task.wait(0.05)
+					ClickDoll(doll)
+				else
+					SetStatus("Doll House not found!", Color3.fromRGB(220,60,60))
+					task.wait(1)
+				end
+				task.wait(0.08)
+			end
+			SetStatus("Doll Farm stopped.", Color3.fromRGB(70,70,70))
+		end)
+	end
+end)
+MakeLine(ScrollTroll)
+
+-- Quick Click
+MakeSec(ScrollTroll, "Quick Doll Click")
+MakeBtn(ScrollTroll, "QUICK CLICK  (item in hand)", Color3.fromRGB(220,150,30), function()
+	task.spawn(function()
+		local doll = FindNearestDollHouse()
+		if not doll then SetStatus("Doll House not found!", Color3.fromRGB(220,60,60)) return end
+		SetStatus("Quick Click...", Color3.fromRGB(220,150,30))
+		ClickDoll(doll)
+		task.wait(0.04)
+		local tool = Character:FindFirstChildWhichIsA("Tool")
+		if tool then
+			local remote = tool:FindFirstChildWhichIsA("RemoteEvent")
+			if remote then remote:FireServer() end
+			pcall(function() tool.Activated:Fire() end)
+		end
+		task.wait(0.03)
+		ClickDoll(doll)
+		SetStatus("Quick Click done!", Color3.fromRGB(60,200,60))
+		task.wait(2) SetStatus("Ready")
+	end)
+end)
+MakeLine(ScrollTroll)
+
+-- ==========================================
+-- NOVA FUNÇÃO: WARDROBE SEQUENCE (TROLL)
+-- ==========================================
+MakeSec(ScrollTroll, "Wardrobe Sequence")
+MakeBtn(ScrollTroll, "EXECUTE WARDROBE SEQUENCE", Color3.fromRGB(180, 50, 200), function()
+	task.spawn(function()
+		-- Inicia Loading Roxo (Diferente do Gold)
+		StartLoading("Wardrobe Sequence", "Equipping Wardrobe...", Color3.fromRGB(180, 50, 200))
+		
+		-- Passo 1: Equipar
+		pcall(function() Events:WaitForChild("Equip"):FireServer("Wardrobe") end)
+		task.wait(1)
+		UpdateLoading(0.25, "Dropping Wardrobe...")
+		
+		-- Passo 2: Dropar
+		pcall(function() Events:WaitForChild("Drop"):FireServer("Wardrobe") end)
+		task.wait(1)
+		UpdateLoading(0.50, "Detecting dropped item...")
+		
+		-- Passo 3: Detectar e clicar no ProximityPrompt
+		local droppedFolder = WS:WaitForChild("Dropped", 3)
+		local wardrobeItem = droppedFolder and droppedFolder:WaitForChild("Wardrobe", 3)
+		
+		if wardrobeItem then
+			local prompt = wardrobeItem:FindFirstChildWhichIsA("ProximityPrompt")
+			if prompt then
+				UpdateLoading(0.65, "Interacting with item...")
+				-- Tenta usar a função do executor, com fallback para simulação
+				local success = pcall(function() fireproximityprompt(prompt) end)
+				if not success then
+					pcall(function() 
+						prompt:InputHoldBegin() 
+						task.wait(0.5) 
+						prompt:InputHoldEnd() 
+					end)
+				end
+			end
+		else
+			UpdateLoading(0.65, "Item not found, continuing...")
+		end
+		
+		task.wait(1)
+		UpdateLoading(0.75, "Teleporting to Augusto Close...")
+		
+		-- Passo 4: Teleportar
+		local targetPart = nil
+		pcall(function()
+			local boards = WS:WaitForChild("Boards", 3)
+			local children = boards:GetChildren()
+			if #children >= 11 then
+				targetPart = children[11]:WaitForChild("Controls", 2):WaitForChild("Close", 2)
+			end
+		end)
+		
+		if targetPart and targetPart:IsA("BasePart") then
+			pcall(function() 
+				-- Adiciona um pequeno offset para não ficar preso dentro da parte
+				RootPart.CFrame = targetPart.CFrame + Vector3.new(0, 5, 0) 
+			end)
+		else
+			UpdateLoading(0.75, "Teleport target missing, using fallback...")
+			pcall(function() RootPart.CFrame = CFrame.new(RootPart.Position + Vector3.new(0, 50, 0)) end)
+		end
+		
+		task.wait(1)
+		UpdateLoading(0.90, "Jumping sequence...")
+		
+		-- Passo 5: Pular 3 vezes
+		local jumpRemote = Events:WaitForChild("Jumped")
+		for i = 1, 3 do
+			-- Tenta pular normalmente pelo Roblox
+			pcall(function() Humanoid.Jump = true end)
+			task.wait(0.2)
+			-- Dispara o remote do jogo
+			pcall(function() jumpRemote:FireServer() end)
+			task.wait(0.8) -- Completa 1 segundo por ciclo de pulo
+		end
+		
+		-- Finaliza com sucesso
+		FinishLoading(true, "Sequence Completed Successfully!")
+		SetStatus("Wardrobe Sequence Done!", Color3.fromRGB(180, 50, 200))
+		task.wait(2)
+		SetStatus("Ready")
+	end)
+end)
+MakeLine(ScrollTroll)
+
+-- ================================
+-- AUTO GOLD (Atualizado para usar o novo sistema de Loading 100%)
+-- ================================
+MakeSec(ScrollTroll, "Auto Gold")
+local TARGET_CF = CFrame.new(
+	945.584717,
+	45.0510025 + 500,
+	-15530.7168,
+	1, 0, 0,
+	0, 1, 0,
+	0, 0, 1
+)
+local autoGoldRunning = false
+
+MakeBtn(ScrollTroll, "AUTO GOLD", Color3.fromRGB(255, 200, 0), function()
+	if autoGoldRunning then return end
+	
+	local tool = Character:FindFirstChildWhichIsA("Tool")
+	if not tool then
+		SetStatus("Equip an item first!", Color3.fromRGB(220, 60, 60))
+		task.spawn(function()
+			task.wait(2)
+			SetStatus("Ready")
+		end)
+		return
+	end
+	
+	autoGoldRunning = true
+	task.spawn(function()
+		-- Usa o sistema de loading Dourado
+		StartLoading("Auto Gold Troll", "Preparing...", Color3.fromRGB(255, 200, 0))
+		
+		local savedPos = RootPart.CFrame
+		
+		-- Fase 1: 25%
+		for i = 1, 20 do
+			UpdateLoading(i / 80, "Preparing...")
+			task.wait(0.1)
+		end
+		
+		UpdateLoading(0.25, "Teleporting...")
+		local ok = pcall(function()
+			RootPart.CFrame = TARGET_CF
+		end)
+		
+		if not ok then
+			FinishLoading(false, "Failed! Could not teleport.")
+			autoGoldRunning = false
+			return
+		end
+		
+		-- Fase 2: 25% a 75%
+		for i = 1, 20 do
+			UpdateLoading(0.25 + (i / 40), "Waiting at target...")
+			task.wait(0.1)
+		end
+		
+		UpdateLoading(0.75, "Returning...")
+		pcall(function()
+			RootPart.CFrame = savedPos
+		end)
+		
+		-- Fase 3: 75% a 100%
+		for i = 1, 20 do
+			UpdateLoading(0.75 + (i / 80), "Returning to position...")
+			task.wait(0.1)
+		end
+		
+		FinishLoading(true, "Done! Returned to previous position.")
+		autoGoldRunning = false
+		SetStatus("Auto Gold done!", Color3.fromRGB(255, 200, 0))
+		task.wait(2) 
+		SetStatus("Ready")
+	end)
+end)
+
+-- ================================
+-- EXTRA PAGE
+-- ================================
+MakeSec(ScrollExtra, "Field Remover")
+local fieldRemoved = false
+local FieldBtn
+FieldBtn = MakeBtn(ScrollExtra, "REMOVE FIELDS", Color3.fromRGB(200, 200, 200), function()
+	if fieldRemoved then return end
+	fieldRemoved = true
+	
+	pcall(function()
+		local vipField = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("VIP") and WS.Map.VIP:FindFirstChild("Field")
+		if vipField then vipField:Destroy() end
+	end)
+	
+	pcall(function()
+		local grField = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("GroupReward") and WS.Map.GroupReward:FindFirstChild("Field")
+		if grField then grField:Destroy() end
+	end)
+	
+	TweenService:Create(FieldBtn, TweenInfo.new(0.2), {
+		BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+	}):Play()
+	FieldBtn.Text = "CANNOT BE ACTIVATED AGAIN"
+	FieldBtn.TextColor3 = Color3.fromRGB(160, 40, 40)
+	FieldBtn.Active = false
+	SetStatus("Fields removed.", Color3.fromRGB(160, 40, 40))
+end)
+
+print("[MASK HUB v6] Loaded successfully with new Wardrobe Sequence!")
+SetStatus("Ready", Color3.fromRGB(70,70,70))
