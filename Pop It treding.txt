@@ -1,4 +1,4 @@
--- MASK HUB v5
+-- MASK HUB v6
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local WS = game:GetService("Workspace")
@@ -40,120 +40,102 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
 -- ================================
--- LOADING SCREEN (Auto Gold)
+-- FULL SCREEN LOADING (Auto Gold)
 -- ================================
-local LoadingFrame = Instance.new("Frame")
-LoadingFrame.Size = UDim2.new(0, 260, 0, 120)
-LoadingFrame.Position = UDim2.new(0.5, -130, 0.5, -60)
-LoadingFrame.BackgroundColor3 = Color3.fromRGB(6, 6, 6)
-LoadingFrame.BorderSizePixel = 0
-LoadingFrame.Visible = false
-LoadingFrame.ZIndex = 50
-LoadingFrame.Parent = ScreenGui
-Instance.new("UICorner", LoadingFrame).CornerRadius = UDim.new(0, 10)
-local LSt = Instance.new("UIStroke", LoadingFrame)
-LSt.Color = Color3.fromRGB(50, 50, 50)
-LSt.Thickness = 1.5
+local LoadOverlay = Instance.new("Frame")
+LoadOverlay.Size = UDim2.new(1, 0, 1, 0)
+LoadOverlay.Position = UDim2.new(0, 0, 0, 0)
+LoadOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+LoadOverlay.BackgroundTransparency = 0
+LoadOverlay.BorderSizePixel = 0
+LoadOverlay.Visible = false
+LoadOverlay.ZIndex = 100
+LoadOverlay.Parent = ScreenGui
+
+-- Card central da loading screen
+local LoadCard = Instance.new("Frame")
+LoadCard.Size = UDim2.new(0, 300, 0, 140)
+LoadCard.Position = UDim2.new(0.5, -150, 0.5, -70)
+LoadCard.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+LoadCard.BorderSizePixel = 0
+LoadCard.ZIndex = 101
+LoadCard.Parent = LoadOverlay
+Instance.new("UICorner", LoadCard).CornerRadius = UDim.new(0, 12)
+local LCS = Instance.new("UIStroke", LoadCard)
+LCS.Color = Color3.fromRGB(50, 50, 50)
+LCS.Thickness = 1.5
 
 local LoadTitle = Instance.new("TextLabel")
-LoadTitle.Size = UDim2.new(1, 0, 0, 34)
+LoadTitle.Size = UDim2.new(1, 0, 0, 38)
 LoadTitle.Position = UDim2.new(0, 0, 0, 10)
 LoadTitle.BackgroundTransparency = 1
 LoadTitle.Text = "Auto Gold Troll"
 LoadTitle.TextColor3 = Color3.fromRGB(255, 200, 0)
-LoadTitle.TextSize = 16
+LoadTitle.TextSize = 18
 LoadTitle.Font = Enum.Font.GothamBold
 LoadTitle.TextXAlignment = Enum.TextXAlignment.Center
-LoadTitle.ZIndex = 51
-LoadTitle.Parent = LoadingFrame
+LoadTitle.ZIndex = 102
+LoadTitle.Parent = LoadCard
 
 local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 18)
-LoadSub.Position = UDim2.new(0, 0, 0, 40)
+LoadSub.Position = UDim2.new(0, 0, 0, 48)
 LoadSub.BackgroundTransparency = 1
 LoadSub.Text = "Teleporting..."
-LoadSub.TextColor3 = Color3.fromRGB(140, 140, 140)
-LoadSub.TextSize = 10
+LoadSub.TextColor3 = Color3.fromRGB(130, 130, 130)
+LoadSub.TextSize = 11
 LoadSub.Font = Enum.Font.Gotham
 LoadSub.TextXAlignment = Enum.TextXAlignment.Center
-LoadSub.ZIndex = 51
-LoadSub.Parent = LoadingFrame
+LoadSub.ZIndex = 102
+LoadSub.Parent = LoadCard
 
--- Track da barra
-local BarBG = Instance.new("Frame")
-BarBG.Size = UDim2.new(0, 210, 0, 10)
-BarBG.Position = UDim2.new(0.5, -105, 0, 68)
-BarBG.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-BarBG.BorderSizePixel = 0
-BarBG.ZIndex = 51
-BarBG.Parent = LoadingFrame
-Instance.new("UICorner", BarBG).CornerRadius = UDim.new(1, 0)
+-- Barra de loading
+local BarTrack = Instance.new("Frame")
+BarTrack.Size = UDim2.new(0, 240, 0, 8)
+BarTrack.Position = UDim2.new(0.5, -120, 0, 76)
+BarTrack.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+BarTrack.BorderSizePixel = 0
+BarTrack.ZIndex = 102
+BarTrack.Parent = LoadCard
+Instance.new("UICorner", BarTrack).CornerRadius = UDim.new(1, 0)
 
 local BarFill = Instance.new("Frame")
 BarFill.Size = UDim2.new(0, 0, 1, 0)
 BarFill.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
 BarFill.BorderSizePixel = 0
-BarFill.ZIndex = 52
-BarFill.Parent = BarBG
+BarFill.ZIndex = 103
+BarFill.Parent = BarTrack
 Instance.new("UICorner", BarFill).CornerRadius = UDim.new(1, 0)
 
 local BarPct = Instance.new("TextLabel")
 BarPct.Size = UDim2.new(1, 0, 0, 16)
-BarPct.Position = UDim2.new(0, 0, 0, 12)
+BarPct.Position = UDim2.new(0, 0, 1, 4)
 BarPct.BackgroundTransparency = 1
 BarPct.Text = "0%"
-BarPct.TextColor3 = Color3.fromRGB(180, 180, 180)
+BarPct.TextColor3 = Color3.fromRGB(160, 160, 160)
 BarPct.TextSize = 9
 BarPct.Font = Enum.Font.GothamBold
 BarPct.TextXAlignment = Enum.TextXAlignment.Center
-BarPct.ZIndex = 51
-BarPct.Parent = BarBG
+BarPct.ZIndex = 102
+BarPct.Parent = BarTrack
 
 local LoadResult = Instance.new("TextLabel")
-LoadResult.Size = UDim2.new(1, 0, 0, 16)
-LoadResult.Position = UDim2.new(0, 0, 0, 96)
+LoadResult.Size = UDim2.new(1, 0, 0, 18)
+LoadResult.Position = UDim2.new(0, 0, 0, 112)
 LoadResult.BackgroundTransparency = 1
 LoadResult.Text = ""
 LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
-LoadResult.TextSize = 9
+LoadResult.TextSize = 10
 LoadResult.Font = Enum.Font.GothamBold
 LoadResult.TextXAlignment = Enum.TextXAlignment.Center
-LoadResult.ZIndex = 51
-LoadResult.Parent = LoadingFrame
+LoadResult.ZIndex = 102
+LoadResult.Parent = LoadCard
 
-local function ShowLoading()
-    BarFill.Size = UDim2.new(0, 0, 1, 0)
-    BarPct.Text = "0%"
-    LoadSub.Text = "Teleporting..."
-    LoadResult.Text = ""
-    LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
-    LoadingFrame.Visible = true
-end
-
-local function AnimateBar(success)
-    local steps = 20
-    local delay = 1 / steps  -- total 1 segundo de animação
-    for i = 1, steps do
-        local pct = i / steps
-        TweenService:Create(BarFill, TweenInfo.new(delay * 0.9), {
-            Size = UDim2.new(pct, 0, 1, 0)
-        }):Play()
-        BarPct.Text = math.floor(pct * 100) .. "%"
-        if i == 10 then
-            LoadSub.Text = "Returning..."
-        end
-        task.wait(delay)
-    end
-    BarPct.Text = "100%"
-    if success then
-        LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
-        LoadResult.Text = "Success! Returned to previous position."
-    else
-        LoadResult.TextColor3 = Color3.fromRGB(220, 60, 60)
-        LoadResult.Text = "Failed! Target not found."
-    end
-    task.wait(1.4)
-    LoadingFrame.Visible = false
+local function SetBarPct(pct)
+    TweenService:Create(BarFill, TweenInfo.new(0.08), {
+        Size = UDim2.new(pct, 0, 1, 0)
+    }):Play()
+    BarPct.Text = math.floor(pct * 100) .. "%"
 end
 
 -- ================================
@@ -161,7 +143,7 @@ end
 -- ================================
 local FloatBtn = Instance.new("TextButton")
 FloatBtn.Size = UDim2.new(0, 56, 0, 56)
-FloatBtn.Position = UDim2.new(0, 14, 0, 14)   -- canto superior esquerdo
+FloatBtn.Position = UDim2.new(0, 14, 0, 14)
 FloatBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 FloatBtn.Text = "MASK\nHUB"
 FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -630,491 +612,143 @@ end)
 MakeLine(ScrollTroll)
 
 -- ================================
--- AUTO GOLD (com loading screen)
+-- AUTO GOLD (botao, fullscreen loading)
 -- ================================
 MakeSec(ScrollTroll, "Auto Gold")
 
--- CFrame alvo fornecido pelo usuário
-local TARGET_CFRAME = CFrame.new(
-    945.584717, 45.0510025, -15530.7168,
+-- CFrame alvo + 500 studs para cima para garantir chegada
+local TARGET_CF = CFrame.new(
+    945.584717,
+    45.0510025 + 500,   -- muito acima do ponto alvo
+    -15530.7168,
     1, 0, 0,
     0, 1, 0,
     0, 0, 1
 )
 
-local autoGoldActive = false
+local autoGoldRunning = false
 
-MakeToggle(ScrollTroll, "AUTO GOLD", Color3.fromRGB(255, 200, 0), function(state)
-    autoGoldActive = state
-    if state then
+MakeBtn(ScrollTroll, "AUTO GOLD", Color3.fromRGB(255, 200, 0), function()
+    if autoGoldRunning then return end
+
+    -- Verifica se tem item na mão
+    local tool = Character:FindFirstChildWhichIsA("Tool")
+    if not tool then
+        SetStatus("Equip an item first!", Color3.fromRGB(220, 60, 60))
         task.spawn(function()
-            while autoGoldActive do
-                -- Salva posição atual
-                local savedPos = RootPart.CFrame
-
-                -- Mostra loading
-                ShowLoading()
-
-                -- Tenta teleportar
-                local success = pcall(function()
-                    RootPart.CFrame = TARGET_CFRAME
-                end)
-
-                if success then
-                    -- Anima barra até 50% enquanto espera 1s no alvo
-                    local halfSteps = 10
-                    for i = 1, halfSteps do
-                        local pct = i / (halfSteps * 2)
-                        TweenService:Create(BarFill, TweenInfo.new(0.05), {
-                            Size = UDim2.new(pct, 0, 1, 0)
-                        }):Play()
-                        BarPct.Text = math.floor(pct * 100) .. "%"
-                        task.wait(0.05)
-                    end
-
-                    LoadSub.Text = "Waiting at target..."
-                    task.wait(0.5)
-
-                    -- Volta para posição anterior
-                    RootPart.CFrame = savedPos
-                    LoadSub.Text = "Returning..."
-
-                    -- Anima barra de 50% a 100%
-                    for i = halfSteps + 1, halfSteps * 2 do
-                        local pct = i / (halfSteps * 2)
-                        TweenService:Create(BarFill, TweenInfo.new(0.05), {
-                            Size = UDim2.new(pct, 0, 1, 0)
-                        }):Play()
-                        BarPct.Text = math.floor(pct * 100) .. "%"
-                        task.wait(0.05)
-                    end
-
-                    BarPct.Text = "100%"
-                    LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
-                    LoadResult.Text = "Success! Returned to previous position."
-                else
-                    -- Falha
-                    BarFill.Size = UDim2.new(1, 0, 1, 0)
-                    BarFill.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-                    BarPct.Text = "Error"
-                    LoadResult.TextColor3 = Color3.fromRGB(220, 60, 60)
-                    LoadResult.Text = "Failed! Could not teleport."
-                    task.wait(1.5)
-                    LoadingFrame.Visible = false
-                    autoGoldActive = false
-                    break
-                end
-
-                task.wait(1.2)
-                LoadingFrame.Visible = false
-
-                if autoGoldActive then
-                    task.wait(0.3)
-                end
-            end
-            SetStatus("Auto Gold stopped.", Color3.fromRGB(70,70,70))
+            task.wait(2)
+            SetStatus("Ready")
         end)
-    else
-        LoadingFrame.Visible = false
-        SetStatus("Auto Gold stopped.", Color3.fromRGB(70,70,70))
+        return
     end
-end)
 
-MakeLine(ScrollTroll)
+    autoGoldRunning = true
+    task.spawn(function()
+        -- Mostra overlay fullscreen
+        LoadOverlay.Visible = true
+        BarFill.Size = UDim2.new(0, 0, 1, 0)
+        BarFill.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+        BarPct.Text = "0%"
+        LoadSub.Text = "Preparing..."
+        LoadResult.Text = ""
 
--- ================================
--- MODELO VISUAL (MELHORADO)
--- ================================
-MakeSec(ScrollTroll, "Visual Models")
+        local savedPos = RootPart.CFrame
 
-local modelWorldActive = false
-local clonedObjects = {}
-local savedPosBeforeWorld = nil
-
-local STAND_NAMES = {
-    "Admin Stand", "Basic Stand", "Candy Stand",
-    "Commom Stand", "Gold Stand", "Rainbow Stand",
-    "Spooky Stand", "Yucky Stand"
-}
-local NPC_NAMES = {
-    "Smoke", "Arrow", "Cupid", "Puzzler",
-    "Slender Man", "ZombiePizza"
-}
-
--- Base do mundo visual
-local WORLD_X  = 5000
-local WORLD_Z  = 5000
-local WORLD_Y  = 200   -- bem alto para evitar colisão com o mapa
-local STAND_ROW_Z = -60   -- linha de cima
-local NPC_ROW_Z   =  60   -- linha de baixo
-local COL_SPACING = 40    -- espaço entre cada objeto
-
-local function CleanModelWorld()
-    for _, obj in pairs(clonedObjects) do
-        if obj and obj.Parent then
-            pcall(function() obj:Destroy() end)
+        -- Fase 1: carrega até 25% (preparação, 2s)
+        local steps1 = 20
+        for i = 1, steps1 do
+            SetBarPct(i / (steps1 * 4))
+            task.wait(2 / steps1)
         end
-    end
-    clonedObjects = {}
-end
+        LoadSub.Text = "Teleporting..."
 
-local function MakeBillboard(parent, text, color, yOffset, size)
-    local Part = Instance.new("Part")
-    Part.Size = Vector3.new(0.5, 0.5, 0.5)
-    Part.Transparency = 1
-    Part.Anchored = true
-    Part.CanCollide = false
-    Part.CFrame = parent.CFrame + Vector3.new(0, yOffset, 0)
-    Part.Parent = WS
-    table.insert(clonedObjects, Part)
+        -- Teleporta para o alvo
+        local ok = pcall(function()
+            RootPart.CFrame = TARGET_CF
+        end)
 
-    local BB = Instance.new("BillboardGui", Part)
-    BB.Size = UDim2.new(0, size or 160, 0, 30)
-    BB.StudsOffset = Vector3.new(0, 0, 0)
-    BB.AlwaysOnTop = true
-    BB.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-    local BG = Instance.new("Frame", BB)
-    BG.Size = UDim2.new(1, 0, 1, 0)
-    BG.BackgroundColor3 = Color3.fromRGB(6, 6, 6)
-    BG.BackgroundTransparency = 0.2
-    BG.BorderSizePixel = 0
-    Instance.new("UICorner", BG).CornerRadius = UDim.new(0, 5)
-
-    local TL = Instance.new("TextLabel", BG)
-    TL.Size = UDim2.new(1, 0, 1, 0)
-    TL.BackgroundTransparency = 1
-    TL.Text = text
-    TL.TextColor3 = color
-    TL.TextSize = 13
-    TL.Font = Enum.Font.GothamBold
-    TL.TextXAlignment = Enum.TextXAlignment.Center
-    TL.TextWrapped = true
-    return Part
-end
-
-local function PlaceObjectAt(obj, targetCFrame)
-    -- Pega todas as BaseParts
-    local parts = {}
-    for _, d in pairs(obj:GetDescendants()) do
-        if d:IsA("BasePart") then
-            table.insert(parts, d)
+        if not ok then
+            BarFill.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            SetBarPct(1)
+            BarPct.Text = "Error"
+            LoadResult.TextColor3 = Color3.fromRGB(220, 60, 60)
+            LoadResult.Text = "Failed! Could not teleport."
+            task.wait(2)
+            LoadOverlay.Visible = false
+            autoGoldRunning = false
+            return
         end
-    end
-    -- Também inclui se o próprio objeto for BasePart
-    if obj:IsA("BasePart") then table.insert(parts, obj) end
 
-    if #parts == 0 then return end
-
-    -- Calcula centro atual
-    local center = Vector3.new(0, 0, 0)
-    for _, p in pairs(parts) do
-        center = center + p.Position
-    end
-    center = center / #parts
-
-    -- Offset para a nova posição
-    local offset = targetCFrame.Position - center
-
-    for _, p in pairs(parts) do
-        p.Anchored = true
-        p.CanCollide = false
-        p.Locked = false
-        p.CastShadow = false
-        -- Mantém rotação original, apenas translada
-        p.CFrame = CFrame.new(p.Position + offset) * (p.CFrame - p.CFrame.Position)
-    end
-end
-
-local function BuildModelWorld()
-    CleanModelWorld()
-    SetStatus("Building world...", Color3.fromRGB(60, 180, 255))
-
-    -- Pasta raiz
-    local WorldFolder = Instance.new("Folder")
-    WorldFolder.Name = "MaskHub_ModelWorld"
-    WorldFolder.Parent = WS
-    table.insert(clonedObjects, WorldFolder)
-
-    -- Plataforma principal (grande, preta, com borda)
-    local TotalWidth = math.max(#STAND_NAMES, #NPC_NAMES) * COL_SPACING + 40
-    local TotalDepth = 200
-
-    local Platform = Instance.new("Part")
-    Platform.Size = Vector3.new(TotalWidth, 4, TotalDepth)
-    Platform.CFrame = CFrame.new(WORLD_X, WORLD_Y - 3, WORLD_Z)
-    Platform.Anchored = true
-    Platform.CanCollide = true
-    Platform.Material = Enum.Material.SmoothPlastic
-    Platform.BrickColor = BrickColor.new("Black")
-    Platform.Parent = WorldFolder
-    table.insert(clonedObjects, Platform)
-
-    -- Grade/borda da plataforma
-    local BorderColors = {
-        Color3.fromRGB(30,30,30),
-        Color3.fromRGB(50,50,50)
-    }
-    for side = 1, 2 do
-        local Border = Instance.new("Part")
-        Border.Size = side == 1 and Vector3.new(TotalWidth + 4, 1, 2) or Vector3.new(2, 1, TotalDepth)
-        Border.CFrame = side == 1
-            and CFrame.new(WORLD_X, WORLD_Y - 0.5, WORLD_Z - TotalDepth/2)
-            or  CFrame.new(WORLD_X - TotalWidth/2, WORLD_Y - 0.5, WORLD_Z)
-        Border.Anchored = true
-        Border.Material = Enum.Material.Neon
-        Border.BrickColor = BrickColor.new("Medium stone grey")
-        Border.Parent = WorldFolder
-        table.insert(clonedObjects, Border)
-    end
-
-    -- Separador entre stands e npcs
-    local Separator = Instance.new("Part")
-    Separator.Size = Vector3.new(TotalWidth, 0.5, 2)
-    Separator.CFrame = CFrame.new(WORLD_X, WORLD_Y + 0.5, WORLD_Z)
-    Separator.Anchored = true
-    Separator.Material = Enum.Material.Neon
-    Separator.BrickColor = BrickColor.new("Bright yellow")
-    Separator.Parent = WorldFolder
-    table.insert(clonedObjects, Separator)
-
-    -- Header STANDS
-    local StandHeaderPart = Instance.new("Part")
-    StandHeaderPart.Size = Vector3.new(1,1,1)
-    StandHeaderPart.CFrame = CFrame.new(WORLD_X, WORLD_Y + 18, WORLD_Z + STAND_ROW_Z)
-    StandHeaderPart.Anchored = true
-    StandHeaderPart.Transparency = 1
-    StandHeaderPart.CanCollide = false
-    StandHeaderPart.Parent = WorldFolder
-    table.insert(clonedObjects, StandHeaderPart)
-
-    local StandBB = Instance.new("BillboardGui", StandHeaderPart)
-    StandBB.Size = UDim2.new(0, 260, 0, 42)
-    StandBB.AlwaysOnTop = true
-    local StandBG = Instance.new("Frame", StandBB)
-    StandBG.Size = UDim2.new(1,0,1,0)
-    StandBG.BackgroundColor3 = Color3.fromRGB(30, 20, 0)
-    StandBG.BackgroundTransparency = 0.1
-    StandBG.BorderSizePixel = 0
-    Instance.new("UICorner", StandBG).CornerRadius = UDim.new(0, 8)
-    local StandBBStroke = Instance.new("UIStroke", StandBG)
-    StandBBStroke.Color = Color3.fromRGB(255, 200, 0)
-    StandBBStroke.Thickness = 1.5
-    local StandTL = Instance.new("TextLabel", StandBG)
-    StandTL.Size = UDim2.new(1,0,1,0)
-    StandTL.BackgroundTransparency = 1
-    StandTL.Text = "STANDS"
-    StandTL.TextColor3 = Color3.fromRGB(255, 200, 0)
-    StandTL.TextSize = 18
-    StandTL.Font = Enum.Font.GothamBold
-
-    -- Header NPCS
-    local NpcHeaderPart = Instance.new("Part")
-    NpcHeaderPart.Size = Vector3.new(1,1,1)
-    NpcHeaderPart.CFrame = CFrame.new(WORLD_X, WORLD_Y + 18, WORLD_Z + NPC_ROW_Z)
-    NpcHeaderPart.Anchored = true
-    NpcHeaderPart.Transparency = 1
-    NpcHeaderPart.CanCollide = false
-    NpcHeaderPart.Parent = WorldFolder
-    table.insert(clonedObjects, NpcHeaderPart)
-
-    local NpcBB = Instance.new("BillboardGui", NpcHeaderPart)
-    NpcBB.Size = UDim2.new(0, 260, 0, 42)
-    NpcBB.AlwaysOnTop = true
-    local NpcBG = Instance.new("Frame", NpcBB)
-    NpcBG.Size = UDim2.new(1,0,1,0)
-    NpcBG.BackgroundColor3 = Color3.fromRGB(0, 15, 35)
-    NpcBG.BackgroundTransparency = 0.1
-    NpcBG.BorderSizePixel = 0
-    Instance.new("UICorner", NpcBG).CornerRadius = UDim.new(0, 8)
-    local NpcBBStroke = Instance.new("UIStroke", NpcBG)
-    NpcBBStroke.Color = Color3.fromRGB(80, 180, 255)
-    NpcBBStroke.Thickness = 1.5
-    local NpcTL = Instance.new("TextLabel", NpcBG)
-    NpcTL.Size = UDim2.new(1,0,1,0)
-    NpcTL.BackgroundTransparency = 1
-    NpcTL.Text = "NPCs"
-    NpcTL.TextColor3 = Color3.fromRGB(80, 180, 255)
-    NpcTL.TextSize = 18
-    NpcTL.Font = Enum.Font.GothamBold
-
-    -- Posição inicial X (centralizado)
-    local startX = WORLD_X - ((math.max(#STAND_NAMES, #NPC_NAMES) - 1) * COL_SPACING) / 2
-
-    -- CLONA STANDS
-    local standsFolder = RS:FindFirstChild("Stands")
-    if standsFolder then
-        for i, sName in ipairs(STAND_NAMES) do
-            local stand = standsFolder:FindFirstChild(sName)
-            if stand then
-                local clone = stand:Clone()
-                clone.Parent = WorldFolder
-                table.insert(clonedObjects, clone)
-
-                local posX = startX + (i-1) * COL_SPACING
-                local targetCF = CFrame.new(posX, WORLD_Y + 5, WORLD_Z + STAND_ROW_Z)
-                PlaceObjectAt(clone, targetCF)
-
-                -- Plataforma individual de destaque
-                local Pad = Instance.new("Part")
-                Pad.Size = Vector3.new(COL_SPACING - 6, 1, COL_SPACING - 6)
-                Pad.CFrame = CFrame.new(posX, WORLD_Y - 0.5, WORLD_Z + STAND_ROW_Z)
-                Pad.Anchored = true
-                Pad.CanCollide = false
-                Pad.Material = Enum.Material.SmoothPlastic
-                Pad.BrickColor = BrickColor.new("Dark stone grey")
-                Pad.Parent = WorldFolder
-                table.insert(clonedObjects, Pad)
-
-                -- Número/índice
-                local IdxPart = Instance.new("Part")
-                IdxPart.Size = Vector3.new(1,1,1)
-                IdxPart.CFrame = CFrame.new(posX, WORLD_Y + 14, WORLD_Z + STAND_ROW_Z)
-                IdxPart.Anchored = true
-                IdxPart.Transparency = 1
-                IdxPart.CanCollide = false
-                IdxPart.Parent = WorldFolder
-                table.insert(clonedObjects, IdxPart)
-
-                local IdxBB = Instance.new("BillboardGui", IdxPart)
-                IdxBB.Size = UDim2.new(0, 180, 0, 36)
-                IdxBB.AlwaysOnTop = true
-                local IdxBG = Instance.new("Frame", IdxBB)
-                IdxBG.Size = UDim2.new(1,0,1,0)
-                IdxBG.BackgroundColor3 = Color3.fromRGB(20, 14, 0)
-                IdxBG.BackgroundTransparency = 0.15
-                IdxBG.BorderSizePixel = 0
-                Instance.new("UICorner", IdxBG).CornerRadius = UDim.new(0, 6)
-                local IdxStroke = Instance.new("UIStroke", IdxBG)
-                IdxStroke.Color = Color3.fromRGB(180, 140, 0)
-                IdxStroke.Thickness = 1
-                local IdxTL = Instance.new("TextLabel", IdxBG)
-                IdxTL.Size = UDim2.new(1,0,1,0)
-                IdxTL.BackgroundTransparency = 1
-                IdxTL.Text = "[" .. i .. "]  " .. sName
-                IdxTL.TextColor3 = Color3.fromRGB(255, 210, 80)
-                IdxTL.TextSize = 11
-                IdxTL.Font = Enum.Font.GothamBold
-                IdxTL.TextWrapped = true
-                IdxTL.TextXAlignment = Enum.TextXAlignment.Center
-
-                task.wait(0.02)
-            end
+        -- Fase 2: carrega de 25% a 75% (espera 2s no alvo)
+        local steps2 = 20
+        for i = 1, steps2 do
+            SetBarPct(0.25 + (i / (steps2 * 2)))
+            task.wait(2 / steps2)
         end
-    end
+        LoadSub.Text = "Returning..."
 
-    -- CLONA NPCS
-    local npcsFolder = RS:FindFirstChild("NPCs")
-    if npcsFolder then
-        for i, nName in ipairs(NPC_NAMES) do
-            local npc = npcsFolder:FindFirstChild(nName)
-            if npc then
-                local clone = npc:Clone()
-                clone.Parent = WorldFolder
-                table.insert(clonedObjects, clone)
+        -- Volta para posição anterior
+        pcall(function()
+            RootPart.CFrame = savedPos
+        end)
 
-                -- Torna tudo visível
-                for _, d in pairs(clone:GetDescendants()) do
-                    if d:IsA("BasePart") then
-                        d.Transparency = 0
-                        d.Anchored = true
-                        d.CanCollide = false
-                        d.CastShadow = false
-                    end
-                    if d:IsA("Humanoid") then
-                        d.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                    end
-                end
-
-                local posX = startX + (i-1) * COL_SPACING
-                local targetCF = CFrame.new(posX, WORLD_Y + 5, WORLD_Z + NPC_ROW_Z)
-                PlaceObjectAt(clone, targetCF)
-
-                -- Plataforma individual
-                local Pad = Instance.new("Part")
-                Pad.Size = Vector3.new(COL_SPACING - 6, 1, COL_SPACING - 6)
-                Pad.CFrame = CFrame.new(posX, WORLD_Y - 0.5, WORLD_Z + NPC_ROW_Z)
-                Pad.Anchored = true
-                Pad.CanCollide = false
-                Pad.Material = Enum.Material.SmoothPlastic
-                Pad.BrickColor = BrickColor.new("Dark stone grey")
-                Pad.Parent = WorldFolder
-                table.insert(clonedObjects, Pad)
-
-                -- Label
-                local IdxPart = Instance.new("Part")
-                IdxPart.Size = Vector3.new(1,1,1)
-                IdxPart.CFrame = CFrame.new(posX, WORLD_Y + 14, WORLD_Z + NPC_ROW_Z)
-                IdxPart.Anchored = true
-                IdxPart.Transparency = 1
-                IdxPart.CanCollide = false
-                IdxPart.Parent = WorldFolder
-                table.insert(clonedObjects, IdxPart)
-
-                local IdxBB = Instance.new("BillboardGui", IdxPart)
-                IdxBB.Size = UDim2.new(0, 180, 0, 36)
-                IdxBB.AlwaysOnTop = true
-                local IdxBG = Instance.new("Frame", IdxBB)
-                IdxBG.Size = UDim2.new(1,0,1,0)
-                IdxBG.BackgroundColor3 = Color3.fromRGB(0, 12, 28)
-                IdxBG.BackgroundTransparency = 0.15
-                IdxBG.BorderSizePixel = 0
-                Instance.new("UICorner", IdxBG).CornerRadius = UDim.new(0, 6)
-                local IdxStroke = Instance.new("UIStroke", IdxBG)
-                IdxStroke.Color = Color3.fromRGB(40, 120, 200)
-                IdxStroke.Thickness = 1
-                local IdxTL = Instance.new("TextLabel", IdxBG)
-                IdxTL.Size = UDim2.new(1,0,1,0)
-                IdxTL.BackgroundTransparency = 1
-                IdxTL.Text = "[" .. i .. "]  " .. nName
-                IdxTL.TextColor3 = Color3.fromRGB(100, 190, 255)
-                IdxTL.TextSize = 11
-                IdxTL.Font = Enum.Font.GothamBold
-                IdxTL.TextWrapped = true
-                IdxTL.TextXAlignment = Enum.TextXAlignment.Center
-
-                task.wait(0.02)
-            end
+        -- Fase 3: carrega de 75% a 100% (espera 2s voltando)
+        local steps3 = 20
+        for i = 1, steps3 do
+            SetBarPct(0.75 + (i / (steps3 * 4)))
+            task.wait(2 / steps3)
         end
-    end
 
-    -- Teleporta jogador para visão geral do mundo
-    savedPosBeforeWorld = RootPart.CFrame
-    RootPart.CFrame = CFrame.new(
-        WORLD_X,
-        WORLD_Y + 10,
-        WORLD_Z - 120
-    ) * CFrame.Angles(0, math.rad(0), 0)
+        SetBarPct(1)
+        BarPct.Text = "100%"
+        LoadResult.TextColor3 = Color3.fromRGB(60, 200, 60)
+        LoadResult.Text = "Done! Returned to previous position."
+        task.wait(1.2)
 
-    SetStatus("Visual world active!", Color3.fromRGB(60, 180, 255))
-end
-
-MakeToggle(ScrollTroll, "VISUAL MODELS", Color3.fromRGB(60, 180, 255), function(state)
-    modelWorldActive = state
-    if state then
-        task.spawn(BuildModelWorld)
-    else
-        CleanModelWorld()
-        if savedPosBeforeWorld then
-            RootPart.CFrame = savedPosBeforeWorld
-        end
-        SetStatus("Visual world removed.", Color3.fromRGB(70,70,70))
-    end
+        LoadOverlay.Visible = false
+        autoGoldRunning = false
+        SetStatus("Auto Gold done!", Color3.fromRGB(255, 200, 0))
+        task.wait(2) SetStatus("Ready")
+    end)
 end)
 
 -- ================================
 -- EXTRA PAGE
 -- ================================
-MakeSec(ScrollExtra, "Extra")
-local csl = Instance.new("TextLabel")
-csl.Size = UDim2.new(1, 0, 0, 60)
-csl.BackgroundTransparency = 1
-csl.Text = "More functions\ncoming soon"
-csl.TextColor3 = Color3.fromRGB(45, 45, 45)
-csl.TextSize = 12
-csl.Font = Enum.Font.GothamBold
-csl.TextXAlignment = Enum.TextXAlignment.Center
-csl.Parent = ScrollExtra
+MakeSec(ScrollExtra, "Field Remover")
 
-print("[MASK HUB v5] Loaded successfully!")
+local fieldRemoved = false
+local FieldBtn
+
+FieldBtn = MakeBtn(ScrollExtra, "REMOVE FIELDS", Color3.fromRGB(200, 200, 200), function()
+    if fieldRemoved then return end
+    fieldRemoved = true
+
+    -- Deleta os campos
+    pcall(function()
+        local vipField = WS:FindFirstChild("Map")
+            and WS.Map:FindFirstChild("VIP")
+            and WS.Map.VIP:FindFirstChild("Field")
+        if vipField then vipField:Destroy() end
+    end)
+
+    pcall(function()
+        local grField = WS:FindFirstChild("Map")
+            and WS.Map:FindFirstChild("GroupReward")
+            and WS.Map.GroupReward:FindFirstChild("Field")
+        if grField then grField:Destroy() end
+    end)
+
+    -- Desativa botao visualmente
+    TweenService:Create(FieldBtn, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    }):Play()
+    FieldBtn.Text = "CANNOT BE ACTIVATED AGAIN"
+    FieldBtn.TextColor3 = Color3.fromRGB(160, 40, 40)
+    FieldBtn.Active = false
+
+    SetStatus("Fields removed.", Color3.fromRGB(160, 40, 40))
+end)
+
+print("[MASK HUB v6] Loaded successfully!")
 SetStatus("Ready", Color3.fromRGB(70,70,70))
