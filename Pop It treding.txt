@@ -1,0 +1,851 @@
+-- MASK HUB v4
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local WS = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    RootPart = char:WaitForChild("HumanoidRootPart")
+end)
+
+local Events = RS:WaitForChild("RemoteEvents")
+local ItemsFolder = RS:WaitForChild("Items")
+
+local function ResolveItemName(inputName)
+    if ItemsFolder:FindFirstChild(inputName) then return inputName end
+    for _, item in pairs(ItemsFolder:GetChildren()) do
+        local dn = item:FindFirstChild("DisplayName")
+        if dn and string.lower(dn.Value) == string.lower(inputName) then return item.Name end
+        if string.lower(item.Name) == string.lower(inputName) then return item.Name end
+    end
+    return inputName
+end
+
+-- ================================
+-- GUI BASE
+-- ================================
+if PlayerGui:FindFirstChild("MaskHub") then
+    PlayerGui:FindFirstChild("MaskHub"):Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MaskHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
+
+-- Botão flutuante redondo
+local FloatBtn = Instance.new("TextButton")
+FloatBtn.Size = UDim2.new(0, 58, 0, 58)
+FloatBtn.Position = UDim2.new(0, 14, 0.5, -29)
+FloatBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+FloatBtn.Text = "MASK\nHUB"
+FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatBtn.TextSize = 9
+FloatBtn.Font = Enum.Font.GothamBold
+FloatBtn.BorderSizePixel = 0
+FloatBtn.Active = true
+FloatBtn.Draggable = true
+FloatBtn.ZIndex = 10
+FloatBtn.Parent = ScreenGui
+Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
+local FS = Instance.new("UIStroke", FloatBtn)
+FS.Color = Color3.fromRGB(45, 45, 45)
+FS.Thickness = 1.5
+
+-- Frame principal QUADRADO
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 270, 0, 270)  -- QUADRADO
+MainFrame.Position = UDim2.new(0.5, -135, 0.5, -135)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+local MS = Instance.new("UIStroke", MainFrame)
+MS.Color = Color3.fromRGB(35, 35, 35)
+MS.Thickness = 1.5
+
+-- Título
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 32)
+TitleBar.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
+
+Instance.new("Frame", TitleBar).Size = UDim2.new(1, 0, 0, 1)
+local tl = TitleBar:FindFirstChildWhichIsA("Frame")
+tl.Position = UDim2.new(0, 0, 1, 0)
+tl.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+tl.BorderSizePixel = 0
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -34, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "MASK HUB"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 13
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.Position = UDim2.new(1, -26, 0.5, -10)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(170, 170, 170)
+CloseBtn.TextSize = 10
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+
+local guiVisible = true
+FloatBtn.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    MainFrame.Visible = guiVisible
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+    guiVisible = false
+    MainFrame.Visible = false
+end)
+
+-- ================================
+-- ABAS (3 abas agora)
+-- ================================
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, 0, 0, 26)
+TabBar.Position = UDim2.new(0, 0, 0, 33)
+TabBar.BackgroundColor3 = Color3.fromRGB(9, 9, 9)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+local TabLineBot = Instance.new("Frame")
+TabLineBot.Size = UDim2.new(1, 0, 0, 1)
+TabLineBot.Position = UDim2.new(0, 0, 1, 0)
+TabLineBot.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+TabLineBot.BorderSizePixel = 0
+TabLineBot.Parent = TabBar
+
+-- Indicador (1/3 da largura)
+local TabIndicator = Instance.new("Frame")
+TabIndicator.Size = UDim2.new(0.333, 0, 0, 2)
+TabIndicator.Position = UDim2.new(0, 0, 1, -2)
+TabIndicator.BackgroundColor3 = Color3.fromRGB(210, 210, 210)
+TabIndicator.BorderSizePixel = 0
+TabIndicator.Parent = TabBar
+
+local tabNames = {"🌾 FARM", "💀 TROLL", "⚙️ EXTRA"}
+local tabBtns = {}
+for i, name in ipairs(tabNames) do
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0.333, 0, 1, 0)
+    Btn.Position = UDim2.new(0.333 * (i-1), 0, 0, 0)
+    Btn.BackgroundTransparency = 1
+    Btn.Text = name
+    Btn.TextColor3 = i == 1 and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+    Btn.TextSize = 9
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Parent = TabBar
+    table.insert(tabBtns, Btn)
+
+    if i < 3 then
+        local Div = Instance.new("Frame")
+        Div.Size = UDim2.new(0, 1, 1, 0)
+        Div.Position = UDim2.new(0.333 * i, 0, 0, 0)
+        Div.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+        Div.BorderSizePixel = 0
+        Div.Parent = TabBar
+    end
+end
+
+-- Área de conteúdo
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, 0, 1, -62)
+ContentArea.Position = UDim2.new(0, 0, 0, 60)
+ContentArea.BackgroundTransparency = 1
+ContentArea.ClipsDescendants = true
+ContentArea.Parent = MainFrame
+
+local function MakeScroll(parent)
+    local Scroll = Instance.new("ScrollingFrame")
+    Scroll.Size = UDim2.new(1, 0, 1, -18)
+    Scroll.BackgroundTransparency = 1
+    Scroll.BorderSizePixel = 0
+    Scroll.ScrollBarThickness = 2
+    Scroll.ScrollBarImageColor3 = Color3.fromRGB(40, 40, 40)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Scroll.Parent = parent
+    local L = Instance.new("UIListLayout", Scroll)
+    L.SortOrder = Enum.SortOrder.LayoutOrder
+    L.Padding = UDim.new(0, 4)
+    local P = Instance.new("UIPadding", Scroll)
+    P.PaddingLeft = UDim.new(0, 6)
+    P.PaddingRight = UDim.new(0, 6)
+    P.PaddingTop = UDim.new(0, 5)
+    return Scroll
+end
+
+local pages = {}
+local scrolls = {}
+for i = 1, 3 do
+    local Page = Instance.new("Frame")
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.Visible = i == 1
+    Page.Parent = ContentArea
+    table.insert(pages, Page)
+    table.insert(scrolls, MakeScroll(Page))
+end
+
+local ScrollFarm  = scrolls[1]
+local ScrollTroll = scrolls[2]
+local ScrollExtra = scrolls[3]
+
+-- Status bar
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -10, 0, 16)
+StatusLabel.Position = UDim2.new(0, 5, 1, -18)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Mask Hub v4 - Pronto"
+StatusLabel.TextColor3 = Color3.fromRGB(80, 80, 80)
+StatusLabel.TextSize = 8
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Center
+StatusLabel.Parent = MainFrame
+
+local function SetStatus(msg, color)
+    StatusLabel.Text = msg
+    StatusLabel.TextColor3 = color or Color3.fromRGB(80, 80, 80)
+end
+
+-- Trocar aba
+local currentTab = 1
+local function SwitchTab(idx)
+    currentTab = idx
+    for i, page in ipairs(pages) do
+        page.Visible = i == idx
+        tabBtns[i].TextColor3 = i == idx and Color3.fromRGB(255,255,255) or Color3.fromRGB(100,100,100)
+    end
+    TweenService:Create(TabIndicator, TweenInfo.new(0.15), {
+        Position = UDim2.new(0.333 * (idx-1), 0, 1, -2)
+    }):Play()
+end
+
+for i, btn in ipairs(tabBtns) do
+    btn.MouseButton1Click:Connect(function() SwitchTab(i) end)
+end
+
+-- ================================
+-- HELPERS UI
+-- ================================
+local function MakeSec(scroll, title)
+    local L = Instance.new("TextLabel")
+    L.Size = UDim2.new(1, 0, 0, 14)
+    L.BackgroundTransparency = 1
+    L.Text = "  " .. string.upper(title)
+    L.TextColor3 = Color3.fromRGB(110, 110, 110)
+    L.TextSize = 8
+    L.Font = Enum.Font.GothamBold
+    L.TextXAlignment = Enum.TextXAlignment.Left
+    L.Parent = scroll
+end
+
+local function MakeLine(scroll)
+    local L = Instance.new("Frame")
+    L.Size = UDim2.new(1, 0, 0, 1)
+    L.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    L.BorderSizePixel = 0
+    L.Parent = scroll
+end
+
+local function MakeTB(scroll, ph, cb)
+    local C = Instance.new("Frame")
+    C.Size = UDim2.new(1, 0, 0, 27)
+    C.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    C.BorderSizePixel = 0
+    C.Parent = scroll
+    Instance.new("UICorner", C).CornerRadius = UDim.new(0, 5)
+    local S = Instance.new("UIStroke", C)
+    S.Color = Color3.fromRGB(26, 26, 26)
+    S.Thickness = 1
+    local TB = Instance.new("TextBox")
+    TB.Size = UDim2.new(1, -10, 1, -6)
+    TB.Position = UDim2.new(0, 5, 0, 3)
+    TB.BackgroundTransparency = 1
+    TB.Text = ""
+    TB.PlaceholderText = ph
+    TB.PlaceholderColor3 = Color3.fromRGB(55, 55, 55)
+    TB.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TB.TextSize = 10
+    TB.Font = Enum.Font.Gotham
+    TB.TextXAlignment = Enum.TextXAlignment.Left
+    TB.ClearTextOnFocus = false
+    TB.Parent = C
+    TB.FocusLost:Connect(function()
+        if TB.Text ~= "" then cb(TB.Text) end
+    end)
+    return C, TB
+end
+
+local function MakeBtn(scroll, label, color, cb)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 27)
+    Btn.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Btn.BorderSizePixel = 0
+    Btn.Text = label
+    Btn.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+    Btn.TextSize = 10
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Parent = scroll
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 5)
+    local S = Instance.new("UIStroke", Btn)
+    S.Color = Color3.fromRGB(30, 30, 30)
+    S.Thickness = 1
+    Btn.MouseEnter:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(26,26,26)}):Play()
+    end)
+    Btn.MouseLeave:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(18,18,18)}):Play()
+    end)
+    Btn.MouseButton1Click:Connect(cb)
+    return Btn
+end
+
+local function MakeToggle(scroll, label, color, cb)
+    local C = Instance.new("Frame")
+    C.Size = UDim2.new(1, 0, 0, 27)
+    C.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    C.BorderSizePixel = 0
+    C.Parent = scroll
+    Instance.new("UICorner", C).CornerRadius = UDim.new(0, 5)
+    local S = Instance.new("UIStroke", C)
+    S.Color = Color3.fromRGB(30, 30, 30)
+    S.Thickness = 1
+    local Lbl = Instance.new("TextLabel")
+    Lbl.Size = UDim2.new(1, -46, 1, 0)
+    Lbl.Position = UDim2.new(0, 8, 0, 0)
+    Lbl.BackgroundTransparency = 1
+    Lbl.Text = label
+    Lbl.TextColor3 = color or Color3.fromRGB(255,255,255)
+    Lbl.TextSize = 10
+    Lbl.Font = Enum.Font.GothamBold
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.Parent = C
+    local Track = Instance.new("Frame")
+    Track.Size = UDim2.new(0, 28, 0, 13)
+    Track.Position = UDim2.new(1, -34, 0.5, -6)
+    Track.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Track.BorderSizePixel = 0
+    Track.Parent = C
+    Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+    local Knob = Instance.new("Frame")
+    Knob.Size = UDim2.new(0, 9, 0, 9)
+    Knob.Position = UDim2.new(0, 2, 0.5, -4)
+    Knob.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+    Knob.BorderSizePixel = 0
+    Knob.Parent = Track
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+    local Hit = Instance.new("TextButton")
+    Hit.Size = UDim2.new(1, 0, 1, 0)
+    Hit.BackgroundTransparency = 1
+    Hit.Text = ""
+    Hit.Parent = C
+    local tog = false
+    Hit.MouseButton1Click:Connect(function()
+        tog = not tog
+        TweenService:Create(Track, TweenInfo.new(0.15), {
+            BackgroundColor3 = tog and Color3.fromRGB(0,130,0) or Color3.fromRGB(30,30,30)
+        }):Play()
+        TweenService:Create(Knob, TweenInfo.new(0.15), {
+            Position = tog and UDim2.new(0,17,0.5,-4) or UDim2.new(0,2,0.5,-4),
+            BackgroundColor3 = tog and Color3.fromRGB(255,255,255) or Color3.fromRGB(90,90,90)
+        }):Play()
+        cb(tog)
+    end)
+    return C
+end
+
+-- ================================
+-- PÁGINA FARM
+-- ================================
+MakeSec(ScrollFarm, "Drop Item Fest")
+
+local dropItemName = "The Banana"
+MakeTB(ScrollFarm, "Nome do item...", function(v)
+    dropItemName = v
+    SetStatus("Drop: "..v, Color3.fromRGB(200,60,60))
+end)
+
+MakeBtn(ScrollFarm, "▶ DROP ITEM FEST (15x)", Color3.fromRGB(220,60,60), function()
+    task.spawn(function()
+        local name = ResolveItemName(dropItemName)
+        local eR = Events:WaitForChild("Equip")
+        local dR = Events:WaitForChild("Drop")
+        SetStatus("Rodando Drop Fest...", Color3.fromRGB(220,60,60))
+        for i = 1, 15 do
+            eR:FireServer(name)
+            task.wait(0.08)
+            dR:FireServer(name)
+            task.wait(0.08)
+        end
+        SetStatus("Drop Fest finalizado!", Color3.fromRGB(60,200,60))
+        task.wait(2) SetStatus("Pronto")
+    end)
+end)
+
+MakeLine(ScrollFarm)
+MakeSec(ScrollFarm, "Buy Items")
+
+local buyItemName = "The Banana"
+local buyLoopActive = false
+
+MakeTB(ScrollFarm, "Nome do item...", function(v)
+    buyItemName = v
+    SetStatus("Buy: "..v, Color3.fromRGB(60,200,60))
+end)
+
+MakeToggle(ScrollFarm, "BUY ITEMS LOOP", Color3.fromRGB(70,210,70), function(state)
+    buyLoopActive = state
+    if state then
+        SetStatus("Comprando em loop...", Color3.fromRGB(60,200,60))
+        task.spawn(function()
+            local bR = Events:WaitForChild("BuyItemCash")
+            while buyLoopActive do
+                bR:FireServer(ResolveItemName(buyItemName))
+                task.wait(0.50)
+            end
+            SetStatus("Buy loop parado.", Color3.fromRGB(80,80,80))
+        end)
+    end
+end)
+
+-- ================================
+-- PÁGINA TROLL
+-- ================================
+
+local function FindNearestDollHouse()
+    local nearest, nearestDist = nil, math.huge
+    local function Search(parent, depth)
+        if depth > 4 then return end
+        for _, obj in pairs(parent:GetChildren()) do
+            if obj.Name == "Doll House" then
+                local part = obj:FindFirstChildWhichIsA("BasePart") or obj.PrimaryPart
+                if part then
+                    local d = (RootPart.Position - part.Position).Magnitude
+                    if d < nearestDist then nearestDist = d nearest = obj end
+                end
+            end
+            Search(obj, depth + 1)
+        end
+    end
+    Search(WS, 0)
+    return nearest
+end
+
+local function ClickDoll(doll)
+    local cd = doll:FindFirstChildWhichIsA("ClickDetector", true)
+    if cd then fireclickdetector(cd) return true end
+    return false
+end
+
+-- Doll House Farm
+MakeSec(ScrollTroll, "Doll House Farm")
+local dollItemName = "The Banana"
+local dollLoopActive = false
+
+MakeTB(ScrollTroll, "Nome do item...", function(v)
+    dollItemName = v
+    SetStatus("Item: "..v, Color3.fromRGB(160,60,220))
+end)
+
+MakeToggle(ScrollTroll, "DOLL HOUSE FARM", Color3.fromRGB(170,70,220), function(state)
+    dollLoopActive = state
+    if state then
+        SetStatus("Doll Farm ativo...", Color3.fromRGB(160,60,220))
+        task.spawn(function()
+            local eR = Events:WaitForChild("Equip")
+            while dollLoopActive do
+                local doll = FindNearestDollHouse()
+                if doll then
+                    ClickDoll(doll)
+                    task.wait(0.05)
+                    eR:FireServer(ResolveItemName(dollItemName))
+                    task.wait(0.05)
+                    ClickDoll(doll)
+                else
+                    SetStatus("Doll House não encontrada!", Color3.fromRGB(220,60,60))
+                    task.wait(1)
+                end
+                task.wait(0.08)
+            end
+            SetStatus("Doll Farm parado.", Color3.fromRGB(80,80,80))
+        end)
+    end
+end)
+
+MakeLine(ScrollTroll)
+
+-- Quick Click (item na mão, 1x)
+MakeSec(ScrollTroll, "Quick Doll Click")
+MakeBtn(ScrollTroll, "▶ QUICK CLICK (item na mão)", Color3.fromRGB(220,160,30), function()
+    task.spawn(function()
+        local doll = FindNearestDollHouse()
+        if not doll then SetStatus("Doll House não encontrada!", Color3.fromRGB(220,60,60)) return end
+        SetStatus("Quick Click...", Color3.fromRGB(220,160,30))
+        ClickDoll(doll)
+        task.wait(0.04)
+        local tool = Character:FindFirstChildWhichIsA("Tool")
+        if tool then
+            local remote = tool:FindFirstChildWhichIsA("RemoteEvent")
+            if remote then remote:FireServer() end
+            tool.Activated:Fire()
+        end
+        task.wait(0.03)
+        ClickDoll(doll)
+        SetStatus("Quick Click feito!", Color3.fromRGB(60,200,60))
+        task.wait(2) SetStatus("Pronto")
+    end)
+end)
+
+MakeLine(ScrollTroll)
+
+-- Auto Gold
+MakeSec(ScrollTroll, "Auto Gold")
+
+local lastPos = nil
+local autoGoldActive = false
+
+MakeToggle(ScrollTroll, "AUTO GOLD", Color3.fromRGB(255, 200, 0), function(state)
+    autoGoldActive = state
+    if state then
+        SetStatus("Auto Gold ativo...", Color3.fromRGB(255, 200, 0))
+        task.spawn(function()
+            while autoGoldActive do
+                -- Salva posição atual antes de ir
+                lastPos = RootPart.CFrame
+
+                -- Teleporta para o Board
+                local ok, board = pcall(function()
+                    return WS.Boards.Board.MAIN
+                end)
+                if ok and board then
+                    local part = board:FindFirstChildWhichIsA("BasePart") or board.PrimaryPart
+                    if part then
+                        RootPart.CFrame = part.CFrame + Vector3.new(0, 4, 0)
+                    end
+                else
+                    SetStatus("Board não encontrado!", Color3.fromRGB(220,60,60))
+                    task.wait(2)
+                    autoGoldActive = false
+                    break
+                end
+
+                -- Espera 1 segundo no board
+                task.wait(1)
+
+                -- Volta para a posição anterior
+                if lastPos then
+                    RootPart.CFrame = lastPos
+                end
+
+                task.wait(0.5)
+            end
+            SetStatus("Auto Gold parado.", Color3.fromRGB(80,80,80))
+        end)
+    else
+        -- Se desligou, volta imediatamente
+        if lastPos then
+            RootPart.CFrame = lastPos
+        end
+        SetStatus("Auto Gold parado.", Color3.fromRGB(80,80,80))
+    end
+end)
+
+MakeLine(ScrollTroll)
+
+-- Modelo Visual
+MakeSec(ScrollTroll, "Modelo Visual")
+
+local modelWorldActive = false
+local clonedObjects = {}  -- guarda os clones para limpar depois
+
+local STAND_NAMES = {
+    "Admin Stand", "Basic Stand", "Candy Stand",
+    "Commom Stand", "Gold Stand", "Rainbow Stand",
+    "Spooky Stand", "Yucky Stand"
+}
+
+local NPC_NAMES = {
+    "Smoke", "Arrow", "Cupid", "Puzzler",
+    "Slender Man", "ZombiePizza"
+}
+
+local function CleanModelWorld()
+    for _, obj in pairs(clonedObjects) do
+        if obj and obj.Parent then
+            obj:Destroy()
+        end
+    end
+    clonedObjects = {}
+end
+
+local function MakeModelWorld()
+    CleanModelWorld()
+
+    -- Posição base bem longe do mapa normal
+    local BASE_X = 5000
+    local BASE_Z = 5000
+    local BASE_Y = 100
+    local SPACING = 30  -- distância entre cada stand/npc
+
+    -- Pasta visual no workspace
+    local WorldFolder = Instance.new("Folder")
+    WorldFolder.Name = "MaskHub_ModelWorld"
+    WorldFolder.Parent = WS
+    table.insert(clonedObjects, WorldFolder)
+
+    -- Plataforma base (chão do mundo visual)
+    local Platform = Instance.new("Part")
+    Platform.Size = Vector3.new(600, 2, 300)
+    Platform.Position = Vector3.new(BASE_X, BASE_Y - 2, BASE_Z)
+    Platform.Anchored = true
+    Platform.BrickColor = BrickColor.new("Dark stone grey")
+    Platform.Material = Enum.Material.SmoothPlastic
+    Platform.Parent = WorldFolder
+    table.insert(clonedObjects, Platform)
+
+    -- Label "STANDS" no chão
+    local StandLabel = Instance.new("Part")
+    StandLabel.Size = Vector3.new(60, 0.5, 10)
+    StandLabel.Position = Vector3.new(BASE_X - 200, BASE_Y + 0.5, BASE_Z - 70)
+    StandLabel.Anchored = true
+    StandLabel.BrickColor = BrickColor.new("Bright yellow")
+    StandLabel.Material = Enum.Material.Neon
+    StandLabel.Parent = WorldFolder
+
+    local SBillboard = Instance.new("BillboardGui", StandLabel)
+    SBillboard.Size = UDim2.new(0, 200, 0, 40)
+    SBillboard.StudsOffset = Vector3.new(0, 3, 0)
+    local STxtL = Instance.new("TextLabel", SBillboard)
+    STxtL.Size = UDim2.new(1, 0, 1, 0)
+    STxtL.BackgroundTransparency = 1
+    STxtL.Text = "— STANDS —"
+    STxtL.TextColor3 = Color3.fromRGB(255, 220, 0)
+    STxtL.TextSize = 20
+    STxtL.Font = Enum.Font.GothamBold
+
+    -- Label "NPCS"
+    local NpcLabel = Instance.new("Part")
+    NpcLabel.Size = Vector3.new(60, 0.5, 10)
+    NpcLabel.Position = Vector3.new(BASE_X - 200, BASE_Y + 0.5, BASE_Z + 70)
+    NpcLabel.Anchored = true
+    NpcLabel.BrickColor = BrickColor.new("Bright blue")
+    NpcLabel.Material = Enum.Material.Neon
+    NpcLabel.Parent = WorldFolder
+
+    local NBillboard = Instance.new("BillboardGui", NpcLabel)
+    NBillboard.Size = UDim2.new(0, 200, 0, 40)
+    NBillboard.StudsOffset = Vector3.new(0, 3, 0)
+    local NTxtL = Instance.new("TextLabel", NBillboard)
+    NTxtL.Size = UDim2.new(1, 0, 1, 0)
+    NTxtL.BackgroundTransparency = 1
+    NTxtL.Text = "— NPCs —"
+    NTxtL.TextColor3 = Color3.fromRGB(80, 180, 255)
+    NTxtL.TextSize = 20
+    NTxtL.Font = Enum.Font.GothamBold
+
+    -- Clona STANDS (linha de cima)
+    local standsFolder = RS:FindFirstChild("Stands")
+    if standsFolder then
+        for i, standName in ipairs(STAND_NAMES) do
+            local stand = standsFolder:FindFirstChild(standName)
+            if stand then
+                local clone = stand:Clone()
+                clone.Name = standName
+                clone.Parent = WorldFolder
+
+                -- Posiciona os filhos no mundo
+                local posX = BASE_X - 200 + (i-1) * SPACING
+                local posZ = BASE_Z - 40
+
+                -- Move todas as BaseParts do clone
+                local parts = {}
+                for _, desc in pairs(clone:GetDescendants()) do
+                    if desc:IsA("BasePart") then
+                        table.insert(parts, desc)
+                    end
+                end
+
+                -- Calcula centro atual das parts
+                if #parts > 0 then
+                    local center = Vector3.new(0,0,0)
+                    for _, p in pairs(parts) do
+                        center = center + p.Position
+                    end
+                    center = center / #parts
+
+                    local offset = Vector3.new(posX, BASE_Y + 5, posZ) - center
+                    for _, p in pairs(parts) do
+                        p.Anchored = true
+                        p.CanCollide = false
+                        p.CFrame = p.CFrame + offset
+                    end
+                end
+
+                -- Label com nome
+                local labelPart = Instance.new("Part")
+                labelPart.Size = Vector3.new(1, 1, 1)
+                labelPart.Position = Vector3.new(posX, BASE_Y + 12, posZ)
+                labelPart.Anchored = true
+                labelPart.Transparency = 1
+                labelPart.CanCollide = false
+                labelPart.Parent = WorldFolder
+
+                local bg = Instance.new("BillboardGui", labelPart)
+                bg.Size = UDim2.new(0, 120, 0, 25)
+                bg.StudsOffset = Vector3.new(0, 2, 0)
+                bg.AlwaysOnTop = true
+                local txt = Instance.new("TextLabel", bg)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.Text = standName
+                txt.TextColor3 = Color3.fromRGB(255, 220, 100)
+                txt.TextSize = 12
+                txt.Font = Enum.Font.GothamBold
+                txt.TextWrapped = true
+
+                table.insert(clonedObjects, clone)
+                table.insert(clonedObjects, labelPart)
+            end
+        end
+    end
+
+    -- Clona NPCs (linha de baixo)
+    local npcsFolder = RS:FindFirstChild("NPCs")
+    if npcsFolder then
+        for i, npcName in ipairs(NPC_NAMES) do
+            local npc = npcsFolder:FindFirstChild(npcName)
+            if npc then
+                local clone = npc:Clone()
+                clone.Name = npcName
+                clone.Parent = WorldFolder
+
+                local posX = BASE_X - 100 + (i-1) * SPACING
+                local posZ = BASE_Z + 50
+
+                -- Torna visível e ancora
+                local parts = {}
+                for _, desc in pairs(clone:GetDescendants()) do
+                    if desc:IsA("BasePart") then
+                        desc.Transparency = 0
+                        desc.Anchored = true
+                        desc.CanCollide = false
+                        table.insert(parts, desc)
+                    end
+                    -- Torna visível MeshParts, SpecialMesh etc
+                    if desc:IsA("SpecialMesh") then
+                        -- nada, só garantir que está no clone
+                    end
+                    -- Habilita humanoid se tiver
+                    if desc:IsA("Humanoid") then
+                        desc.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+                    end
+                end
+
+                -- Centraliza
+                if #parts > 0 then
+                    local center = Vector3.new(0,0,0)
+                    for _, p in pairs(parts) do
+                        center = center + p.Position
+                    end
+                    center = center / #parts
+                    local offset = Vector3.new(posX, BASE_Y + 5, posZ) - center
+                    for _, p in pairs(parts) do
+                        p.CFrame = p.CFrame + offset
+                    end
+                end
+
+                -- Label nome
+                local labelPart = Instance.new("Part")
+                labelPart.Size = Vector3.new(1,1,1)
+                labelPart.Position = Vector3.new(posX, BASE_Y + 14, posZ)
+                labelPart.Anchored = true
+                labelPart.Transparency = 1
+                labelPart.CanCollide = false
+                labelPart.Parent = WorldFolder
+
+                local bg = Instance.new("BillboardGui", labelPart)
+                bg.Size = UDim2.new(0, 120, 0, 25)
+                bg.StudsOffset = Vector3.new(0, 2, 0)
+                bg.AlwaysOnTop = true
+                local txt = Instance.new("TextLabel", bg)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.Text = npcName
+                txt.TextColor3 = Color3.fromRGB(100, 200, 255)
+                txt.TextSize = 12
+                txt.Font = Enum.Font.GothamBold
+                txt.TextWrapped = true
+
+                table.insert(clonedObjects, clone)
+                table.insert(clonedObjects, labelPart)
+            end
+        end
+    end
+
+    -- Teleporta jogador para o mundo visual
+    local savedPos = RootPart.CFrame
+    RootPart.CFrame = CFrame.new(BASE_X, BASE_Y + 6, BASE_Z - 100)
+
+    return savedPos
+end
+
+local savedPosBeforeWorld = nil
+
+MakeToggle(ScrollTroll, "MODELO VISUAL", Color3.fromRGB(60, 180, 255), function(state)
+    modelWorldActive = state
+    if state then
+        SetStatus("Criando mundo visual...", Color3.fromRGB(60, 180, 255))
+        task.spawn(function()
+            savedPosBeforeWorld = MakeModelWorld()
+            SetStatus("Mundo visual ativo!", Color3.fromRGB(60, 180, 255))
+        end)
+    else
+        -- Destroi o mundo e volta
+        CleanModelWorld()
+        if savedPosBeforeWorld then
+            RootPart.CFrame = savedPosBeforeWorld
+        end
+        SetStatus("Mundo visual removido.", Color3.fromRGB(80,80,80))
+    end
+end)
+
+-- ================================
+-- PÁGINA EXTRA (reservada)
+-- ================================
+MakeSec(ScrollExtra, "Em breve")
+local comingSoon = Instance.new("TextLabel")
+comingSoon.Size = UDim2.new(1, 0, 0, 60)
+comingSoon.BackgroundTransparency = 1
+comingSoon.Text = "Novas funções\nem breve..."
+comingSoon.TextColor3 = Color3.fromRGB(60, 60, 60)
+comingSoon.TextSize = 13
+comingSoon.Font = Enum.Font.GothamBold
+comingSoon.TextXAlignment = Enum.TextXAlignment.Center
+comingSoon.Parent = ScrollExtra
+
+print("[MASK HUB v4] Carregado com sucesso!")
+SetStatus("Mask Hub v4 - Pronto", Color3.fromRGB(80,80,80))
