@@ -1,4 +1,4 @@
--- MASK HUB v6 (Atualizado com Invisible Potion & UI Blocker)
+-- MASK HUB v6 (Atualizado com Bloqueio Agressivo de Reset UI)
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local WS = game:GetService("Workspace")
@@ -641,7 +641,7 @@ end)
 MakeLine(ScrollTroll)
 
 -- ==========================================
--- NOVA FUNÇÃO: INVISIBLE POTION SEQUENCE
+-- NOVA FUNÇÃO: INVISIBLE POTION SEQUENCE (COM BLOQUEIO AGRESSIVO)
 -- ==========================================
 MakeSec(ScrollTroll, "Invisible Potion Sequence")
 MakeBtn(ScrollTroll, "EXECUTE INVISIBLE POTION", Color3.fromRGB(0, 200, 255), function()
@@ -653,17 +653,30 @@ MakeBtn(ScrollTroll, "EXECUTE INVISIBLE POTION", Color3.fromRGB(0, 200, 255), fu
 		pcall(function() 
 			Events:WaitForChild("Equip"):FireServer("Potion Invisible") 
 		end)
-		task.wait(1)
-		UpdateLoading(0.3, "Activating Item...")
+		task.wait(0.5)
+		UpdateLoading(0.3, "Activating Item & Blocking UI...")
 		
-		-- 3. Configura o bloqueio ABSOLUTO da UI "ResetPotion"
-		-- Destrói imediatamente caso já exista
-		if PlayerGui:FindFirstChild("ResetPotion") then
-			PlayerGui.ResetPotion:Destroy()
+		-- 3. Configura o bloqueio ABSOLUTO e AGRESSIVO da UI de Reset
+		-- Função para nukar qualquer vestígio da UI de reset
+		local function nukeResetUI()
+			-- Destrói alvos exatos
+			if PlayerGui:FindFirstChild("Reset") then PlayerGui.Reset:Destroy() end
+			if PlayerGui:FindFirstChild("ResetPotion") then PlayerGui.ResetPotion:Destroy() end
+			
+			-- Fallback: varre e destrói QUALQUER coisa no PlayerGui que tenha "Reset" no nome
+			for _, child in ipairs(PlayerGui:GetChildren()) do
+				if string.find(child.Name, "Reset") then
+					child:Destroy()
+				end
+			end
 		end
-		-- Monitora e destrói assim que o jogo tentar criá-la
+		
+		-- Destrói imediatamente qualquer UI que já exista antes de ativar
+		nukeResetUI()
+		
+		-- Monitora e destrói instantaneamente (0.0s de delay) assim que o jogo tentar criar
 		local blockConn = PlayerGui.ChildAdded:Connect(function(child)
-			if child.Name == "ResetPotion" then
+			if string.find(child.Name, "Reset") then
 				child:Destroy()
 			end
 		end)
@@ -680,15 +693,16 @@ MakeBtn(ScrollTroll, "EXECUTE INVISIBLE POTION", Color3.fromRGB(0, 200, 255), fu
 			end
 		end
 		
-		task.wait(1)
-		UpdateLoading(0.6, "Blocking UI Prompts...")
-		
-		-- 5. Espera o tempo necessário (o script original espera 3 segundos para mostrar o botão de reset)
-		task.wait(3.5)
-		UpdateLoading(0.9, "Finalizing...")
+		-- 5. Espera o tempo necessário (o script original espera 3 segundos para mostrar o botão)
+		-- Durante esse tempo, o "nukeResetUI" e o "ChildAdded" garantem que a GUI seja destruída
+		-- antes que o "wait(3)" termine e o "Humanoid.Health = 0" seja executado.
+		task.wait(4)
 		
 		-- 6. Finaliza e limpa a conexão de bloqueio
 		blockConn:Disconnect()
+		nukeResetUI() -- Garante que nada sobrou
+		
+		UpdateLoading(0.9, "Finalizing...")
 		FinishLoading(true, "Potion Activated & UI Blocked!")
 		SetStatus("Invisible Potion Done!", Color3.fromRGB(0, 200, 255))
 		task.wait(2)
@@ -802,5 +816,5 @@ FieldBtn = MakeBtn(ScrollExtra, "REMOVE FIELDS", Color3.fromRGB(200, 200, 200), 
 	SetStatus("Fields removed.", Color3.fromRGB(160, 40, 40))
 end)
 
-print("[MASK HUB v6] Loaded successfully with Invisible Potion & UI Blocker!")
+print("[MASK HUB v6] Loaded successfully with Aggressive Reset UI Blocker!")
 SetStatus("Ready", Color3.fromRGB(70,70,70))
